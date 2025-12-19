@@ -26,11 +26,20 @@ export type FieldConfigItem = {
   order?: number;
 };
 
+/**
+ * FieldConfig for nested objects - allows both FieldConfigItem properties
+ * AND nested field configs for child properties.
+ */
+export type FieldConfigObject = FieldConfigItem & {
+  [key: string]: FieldConfigItem | FieldConfigObject | undefined;
+};
+
+/**
+ * For object fields, allow both FieldConfigItem properties (label, description, etc.)
+ * AND nested field configs for the object's properties.
+ */
 export type FieldConfig<SchemaType extends z.infer<z.ZodObject<any, any>>> = {
-  // If SchemaType.key is an object, create a nested FieldConfig, otherwise FieldConfigItem
-  [Key in keyof SchemaType]?: SchemaType[Key] extends object
-    ? FieldConfig<z.infer<SchemaType[Key]>>
-    : FieldConfigItem;
+  [Key in keyof SchemaType]?: FieldConfigItem | FieldConfigObject;
 };
 
 export enum DependencyType {
