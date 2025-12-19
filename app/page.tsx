@@ -1,55 +1,126 @@
 "use client";
 
 import AutoForm, { AutoFormSubmit } from "@/components/ui/auto-form";
+import { buildFieldConfigFromJsonSchema } from "@/components/ui/auto-form/utils";
 import { z } from "zod";
 
 // Comprehensive schema demonstrating all available field types
+// Using FieldConfigItem shape in .meta() for consistency
 const allFieldsSchema = z.object({
   // Basic text input (default fallback)
-  username: z.string().min(2, "Username must be at least 2 characters"),
+  username: z.string().min(2, "Username must be at least 2 characters").meta({
+    label: "User Name",
+    description: "Your unique username for the platform",
+    inputProps: {
+      placeholder: "johndoe",
+    },
+  }),
   
   // Email input
-  email: z.string().email("Please enter a valid email"),
+  email: z.string().email("Please enter a valid email").meta({
+    description: "We'll never share your email",
+    inputProps: {
+      placeholder: "john@example.com",
+      type: "email",
+    },
+  }),
   
-  // Password input (configured via inputProps)
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  // Password input
+  password: z.string().min(8, "Password must be at least 8 characters").meta({
+    label: "Password",
+    description: "At least 8 characters",
+    inputProps: {
+      placeholder: "••••••••",
+      type: "password",
+    },
+  }),
   
   // Textarea
-  bio: z.string().optional(),
+  bio: z.string().optional().meta({
+    label: "Bio",
+    description: "Tell us about yourself",
+    fieldType: "textarea",
+    inputProps: {
+      placeholder: "I'm a software developer who loves...",
+    },
+  }),
   
   // Number input
-  age: z.number().min(0).max(120).optional(),
+  age: z.number().min(0).max(120).optional().meta({
+    label: "Age",
+    description: "Your current age",
+    inputProps: {
+      placeholder: "25",
+    },
+  }),
   
   // Checkbox (boolean)
   acceptTerms: z.boolean().refine((val) => val === true, {
     message: "You must accept the terms and conditions",
+  }).meta({
+    label: "Accept Terms & Conditions",
+    description: "You must accept to continue",
   }),
   
   // Switch (boolean with different field type)
-  emailNotifications: z.boolean().default(true),
+  emailNotifications: z.boolean().default(true).meta({
+    label: "Email Notifications",
+    description: "Receive updates via email",
+    fieldType: "switch",
+  }),
   
   // Date picker
-  birthDate: z.date().optional(),
+  // birthDate: z.date().optional(),
   
   // Select dropdown (enum)
-  role: z.enum(["admin", "user", "moderator", "guest"]),
+  role: z.enum(["admin", "user", "moderator", "guest"]).meta({
+    label: "Role",
+    description: "Select your account role",
+    inputProps: {
+      placeholder: "Select a role",
+    },
+  }),
   
   // Radio group (enum with different field type)
-  gender: z.enum(["male", "female", "other", "prefer-not-to-say"]).optional(),
+  gender: z.enum(["male", "female", "other", "prefer-not-to-say"]).optional().meta({
+    label: "Gender",
+    description: "Select your gender",
+    fieldType: "radio",
+  }),
   
   // Select with optional
-  country: z.enum(["usa", "uk", "canada", "australia", "germany", "france", "japan"]).optional(),
+  country: z.enum(["usa", "uk", "canada", "australia", "germany", "france", "japan"]).optional().meta({
+    label: "Country",
+    description: "Where are you located?",
+    inputProps: {
+      placeholder: "Select a country",
+    },
+  }),
   
   // File upload
-  avatar: z.instanceof(File).optional(),
+  // avatar: z.instanceof(File).optional(),
   
   // Nested object
   address: z.object({
-    street: z.string().optional(),
-    city: z.string().optional(),
-    zipCode: z.string().optional(),
-    state: z.string().optional(),
-  }).optional(),
+    street: z.string().optional().meta({
+      label: "Street Address",
+      inputProps: { placeholder: "123 Main St" },
+    }),
+    city: z.string().optional().meta({
+      label: "City",
+      inputProps: { placeholder: "New York" },
+    }),
+    zipCode: z.string().optional().meta({
+      label: "ZIP Code",
+      inputProps: { placeholder: "10001" },
+    }),
+    state: z.string().optional().meta({
+      label: "State",
+      inputProps: { placeholder: "NY" },
+    }),
+  }).optional().meta({
+    label: "Address",
+  }),
   
   // Array of objects
   workExperience: z.array(
@@ -59,31 +130,53 @@ const allFieldsSchema = z.object({
       startYear: z.number().min(1900).max(2030),
       current: z.boolean().default(false),
     })
-  ).optional(),
+  ).optional().meta({
+    label: "Work Experience",
+    description: "Add your previous work experience",
+  }),
   
   // Additional optional fields with defaults
-  preferredLanguage: z.enum(["english", "spanish", "french", "german", "japanese", "mandarin"]).default("english"),
+  preferredLanguage: z.enum(["english", "spanish", "french", "german", "japanese", "mandarin"]).default("english").meta({
+    label: "Preferred Language",
+    description: "Your primary language",
+  }),
   
   // URL input
-  website: z.string().url("Please enter a valid URL").optional(),
+  website: z.string().url("Please enter a valid URL").optional().meta({
+    label: "Website",
+    description: "Your personal or portfolio website",
+    inputProps: {
+      placeholder: "https://example.com",
+    },
+  }),
   
   // Phone number
-  phone: z.string().optional(),
+  phone: z.string().optional().meta({
+    label: "Phone Number",
+    description: "Your contact number",
+    inputProps: {
+      placeholder: "+1 (555) 123-4567",
+      type: "tel",
+    },
+  }),
 });
 
 type FormData = z.infer<typeof allFieldsSchema>;
 
+const allFieldsJsonSchema = allFieldsSchema.toJSONSchema();
+
 export default function Home() {
   const handleSubmit = (values: FormData) => {
     console.log("Form submitted:", values);
-    alert("Form submitted! Check console for values.");
   };
+
+  console.log(allFieldsSchema.toJSONSchema());
 
   return (
     <div className="min-h-screen ">
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40"></div>
       
-      <main className="relative mx-auto max-w-2xl px-6 py-16">
+      <main className="relative mx-auto px-6 py-16">
         <header className="mb-12 text-center">
           <h1 className="mb-3 font-serif text-4xl font-bold tracking-tight text-white md:text-5xl">
             AutoForm Demo
@@ -93,20 +186,19 @@ export default function Home() {
           </p>
         </header>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl grid grid-cols-2 gap-2">
           <AutoForm
             formSchema={allFieldsSchema}
             onSubmit={handleSubmit}
             fieldConfig={{
               username: {
-                label: "Username",
+                label: "User Name",
                 description: "Your unique username for the platform",
                 inputProps: {
                   placeholder: "johndoe",
                 },
               },
               email: {
-                label: "Email Address",
                 description: "We'll never share your email",
                 inputProps: {
                   placeholder: "john@example.com",
@@ -145,10 +237,10 @@ export default function Home() {
                 description: "Receive updates via email",
                 fieldType: "switch",
               },
-              birthDate: {
-                label: "Birth Date",
-                description: "Your date of birth",
-              },
+              // birthDate: {
+              //   label: "Birth Date",
+              //   description: "Your date of birth",
+              // },
               role: {
                 label: "Role",
                 description: "Select your account role",
@@ -168,11 +260,11 @@ export default function Home() {
                   placeholder: "Select a country",
                 },
               },
-              avatar: {
-                label: "Profile Picture",
-                description: "Upload your avatar (image files only)",
-                fieldType: "file",
-              },
+              // avatar: {
+              //   label: "Profile Picture",
+              //   description: "Upload your avatar (image files only)",
+              //   fieldType: "file",
+              // },
               address: {
                 label: "Address",
                 street: {
@@ -224,6 +316,15 @@ export default function Home() {
                 },
               },
             }}
+          >
+            <AutoFormSubmit className="mt-6 w-full">
+              Submit Form
+            </AutoFormSubmit>
+          </AutoForm>
+          <AutoForm
+            formSchema={z.fromJSONSchema(allFieldsJsonSchema)}
+            onSubmit={(values) => handleSubmit(values as FormData)}
+            fieldConfig={buildFieldConfigFromJsonSchema(allFieldsJsonSchema)}
           >
             <AutoFormSubmit className="mt-6 w-full">
               Submit Form

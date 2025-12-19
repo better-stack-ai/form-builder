@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Plus, Trash } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import * as z from "zod";
-import { beautifyObjectName, getSchemaDescription } from "../utils";
+import { beautifyObjectName } from "../utils";
 import AutoFormObject from "./object";
 
 /**
@@ -64,7 +64,7 @@ export default function AutoFormArray({
     control: form.control,
     name: fieldPath,
   });
-  const title = getSchemaDescription(item) ?? beautifyObjectName(name);
+  const title = fieldConfig?.label ?? beautifyObjectName(name);
 
   const itemDefType = getArrayElementType(item);
 

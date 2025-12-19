@@ -1,7 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import type { DefaultValues } from "react-hook-form";
 import { z } from "zod";
-import type { FieldConfig } from "./types";
+import type { AutoFormInputComponentProps, FieldConfig } from "./types";
+
+export const BUILTIN_FIELD_TYPES = [
+	"checkbox",
+	"date",
+	"select",
+	"radio",
+	"switch",
+	"textarea",
+	"number",
+	"file",
+	"fallback",
+] as const;
 
 /**
  * Get the type name from a Zod v4 schema's _zod.def.
@@ -11,15 +24,6 @@ function getDefTypeName(schema: z.ZodType): string {
   // Access through _zod.def.type for Zod v4
   const def = (schema as any)._zod?.def;
   return def?.type || "";
-}
-
-/**
- * Check if a schema definition matches a type name (Zod v4 only).
- * @param schema - The Zod schema
- * @param typeName - Zod v4 style name (e.g., "default", "optional", "object")
- */
-function isDefType(schema: z.ZodType, typeName: string): boolean {
-  return getDefTypeName(schema) === typeName;
 }
 
 /**
@@ -160,8 +164,9 @@ export function getDefaultValues<Schema extends z.ZodObject<any, any>>(
       }
     } else {
       let defaultValue = getDefaultValueInZodStack(item);
+      // Also check fieldConfig for default values (important for JSON schema derived forms)
       if (
-        (defaultValue === null || defaultValue === "") &&
+        (defaultValue === undefined || defaultValue === null || defaultValue === "") &&
         fieldConfig?.[key]?.inputProps
       ) {
         defaultValue = (fieldConfig?.[key]?.inputProps as unknown as any)
@@ -297,4 +302,115 @@ export function sortFieldsByOrder<SchemaType extends z.ZodObject<any, any>>(
   });
 
   return sortedFields;
+}
+
+/**
+ * JSON schema property shape that includes FieldConfigItem-compatible metadata.
+ * When using .meta() with FieldConfigItem shape, these get serialized into the JSON schema.
+ */
+type JsonSchemaProperty = {
+	description?: string;
+	label?: string;
+	fieldType?: string;
+	inputProps?: Record<string, unknown>;
+	order?: number;
+	// JSON schema standard properties
+	default?: unknown;
+	// Nested object properties
+	properties?: Record<string, JsonSchemaProperty>;
+};
+
+export function buildFieldConfigFromJsonSchema(
+	jsonSchema: Record<string, unknown>,
+	storedFieldConfig?: Record<string, { fieldType?: string }>,
+	uploadImage?: (file: File) => Promise<string>,
+	fieldComponents?: Record<
+		string,
+		React.ComponentType<AutoFormInputComponentProps>
+	>,
+): FieldConfig<Record<string, unknown>> {
+	const fieldConfig: FieldConfig<Record<string, unknown>> = {};
+	const properties = jsonSchema.properties as Record<string, JsonSchemaProperty>;
+
+	if (!properties) return fieldConfig;
+
+	for (const [key, value] of Object.entries(properties)) {
+		const config: Record<string, unknown> = {};
+
+		// Extract label from meta
+		if (value.label) {
+			config.label = value.label;
+		}
+
+		// Extract description from meta
+		if (value.description) {
+			config.description = value.description;
+		}
+
+		// Extract inputProps from meta (includes placeholder, type, etc.)
+		// Also merge in default value if present
+		const inputProps: Record<string, unknown> = value.inputProps ? { ...value.inputProps } : {};
+		
+		// Extract default value from JSON schema and pass it via inputProps
+		// Also mark field as not required if it has a default value
+		if (value.default !== undefined) {
+			inputProps.defaultValue = value.default;
+			inputProps.required = false;
+		}
+		
+		if (Object.keys(inputProps).length > 0) {
+			config.inputProps = inputProps;
+		}
+
+		// Extract order from meta
+		if (value.order !== undefined) {
+			config.order = value.order;
+		}
+
+		// Extract fieldType from meta or storedFieldConfig
+		const fieldType = value.fieldType ?? storedFieldConfig?.[key]?.fieldType;
+
+		if (fieldType) {
+			// 1. Check if there's a custom component in fieldComponents
+			if (fieldComponents?.[fieldType]) {
+				const CustomComponent = fieldComponents[fieldType];
+				config.fieldType = (props: AutoFormInputComponentProps) => (
+					<CustomComponent {...props} />
+				);
+			}
+			// 2. For built-in types, pass through to auto-form
+			else if (
+				BUILTIN_FIELD_TYPES.includes(
+					fieldType as (typeof BUILTIN_FIELD_TYPES)[number],
+				)
+			) {
+				config.fieldType = fieldType;
+			}
+			// 3. Unknown custom type without a component - log warning and skip
+			else {
+				console.warn(
+					`CMS: Unknown fieldType "${fieldType}" for field "${key}". ` +
+						`Provide a component via fieldComponents override or use a built-in type.`,
+				);
+			}
+		}
+
+		// Handle nested object properties recursively
+		if (value.properties) {
+			const nestedConfig = buildFieldConfigFromJsonSchema(
+				{ properties: value.properties } as Record<string, unknown>,
+				undefined,
+				uploadImage,
+				fieldComponents,
+			);
+			// Merge nested config into this config
+			Object.assign(config, nestedConfig);
+		}
+
+		if (Object.keys(config).length > 0) {
+			fieldConfig[key] = config;
+		}
+	}
+
+	return fieldConfig;
 }
