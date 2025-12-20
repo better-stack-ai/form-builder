@@ -3,6 +3,7 @@ import { FormControl, FormItem, FormMessage } from "@/components/ui/form";
 import AutoFormLabel from "../common/label";
 import AutoFormTooltip from "../common/tooltip";
 import type { AutoFormInputComponentProps } from "../types";
+import { getBaseType } from "../utils";
 
 /**
  * Convert a value to a Date object if needed.
@@ -24,22 +25,24 @@ export default function AutoFormDate({
   field,
   fieldConfigItem,
   fieldProps,
+  zodItem,
 }: AutoFormInputComponentProps) {
-  // Determine if the underlying schema expects a string (ISO format) or Date
-  // This is detected by checking if the current value is a string
-  const expectsString = typeof field.value === "string" || field.value === undefined;
+  // Determine if the underlying schema expects a Date object or string
+  // z.date() has base type "ZodDate", while z.fromJSONSchema with format: date-time creates a ZodString
+  const baseType = getBaseType(zodItem);
+  const expectsDateObject = baseType === "ZodDate";
   
   const handleChange = (date: Date | undefined) => {
     if (!date) {
       field.onChange(undefined);
       return;
     }
-    // If the form expects a string (from JSON Schema), convert to ISO string
-    // Otherwise, keep as Date object (from native z.date())
-    if (expectsString) {
-      field.onChange(date.toISOString());
-    } else {
+    // If the schema is z.date(), pass Date object
+    // If the schema is string (from JSON Schema), pass ISO string
+    if (expectsDateObject) {
       field.onChange(date);
+    } else {
+      field.onChange(date.toISOString());
     }
   };
 

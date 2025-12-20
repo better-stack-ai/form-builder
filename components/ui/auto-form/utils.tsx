@@ -16,6 +16,9 @@ import type { AutoFormInputComponentProps, FieldConfig } from "./types";
  * - Forms work directly with JavaScript Date objects
  * - z.date() validates Date objects correctly
  * - JSON Schema just needs a string representation for storage/transport
+ * 
+ * Min/max date constraints are preserved as formatMinimum/formatMaximum
+ * in the JSON Schema output (JSON Schema draft 7+ format validation).
  */
 export function toJSONSchemaWithDates<T extends z.ZodType>(schema: T) {
   return z.toJSONSchema(schema, {
@@ -25,6 +28,17 @@ export function toJSONSchemaWithDates<T extends z.ZodType>(schema: T) {
       if (def?.type === "date") {
         ctx.jsonSchema.type = "string";
         ctx.jsonSchema.format = "date-time";
+        
+        // Preserve min/max date constraints
+        // In Zod v4, these are available as minDate/maxDate on the schema object
+        const zodSchema = ctx.zodSchema as any;
+        if (zodSchema.minDate) {
+          // Store as ISO string for JSON Schema format validation
+          ctx.jsonSchema.formatMinimum = zodSchema.minDate;
+        }
+        if (zodSchema.maxDate) {
+          ctx.jsonSchema.formatMaximum = zodSchema.maxDate;
+        }
       }
     },
   });
@@ -346,9 +360,88 @@ type JsonSchemaProperty = {
 	type?: string;
 	format?: string; // e.g., "date-time", "email", "uri"
 	default?: unknown;
+	// Date format constraints (from toJSONSchemaWithDates)
+	formatMinimum?: string;
+	formatMaximum?: string;
 	// Nested object properties
 	properties?: Record<string, JsonSchemaProperty>;
 };
+
+/**
+ * Create a Zod schema from JSON Schema with proper date handling.
+ * 
+ * This is the counterpart to toJSONSchemaWithDates. It:
+ * 1. Uses z.fromJSONSchema to create the base schema
+ * 2. Wraps date fields with validation for formatMinimum/formatMaximum
+ * 3. Keeps dates as strings (ISO format) for JSON compatibility
+ * 
+ * The date field component handles converting strings to Date objects for display.
+ */
+export function fromJSONSchemaWithDates(jsonSchema: Record<string, unknown>): z.ZodType {
+	const baseSchema = z.fromJSONSchema(jsonSchema);
+	const properties = jsonSchema.properties as Record<string, JsonSchemaProperty> | undefined;
+	
+	if (!properties) return baseSchema;
+	
+	// Find date fields that need validation
+	const dateFieldsWithConstraints: Record<string, { min?: string; max?: string }> = {};
+	
+	for (const [key, prop] of Object.entries(properties)) {
+		if (prop.type === "string" && prop.format === "date-time") {
+			if (prop.formatMinimum || prop.formatMaximum) {
+				dateFieldsWithConstraints[key] = {
+					min: prop.formatMinimum,
+					max: prop.formatMaximum,
+				};
+			}
+		}
+	}
+	
+	// If no date constraints, return base schema
+	if (Object.keys(dateFieldsWithConstraints).length === 0) {
+		return baseSchema;
+	}
+	
+	// Add refinements for date validation
+	return baseSchema.superRefine((data: any, ctx) => {
+		for (const [key, constraints] of Object.entries(dateFieldsWithConstraints)) {
+			const value = data[key];
+			if (value === undefined || value === null || value === "") continue;
+			
+			const dateValue = new Date(value);
+			if (isNaN(dateValue.getTime())) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: "Invalid date",
+					path: [key],
+				});
+				continue;
+			}
+			
+			if (constraints.min) {
+				const minDate = new Date(constraints.min);
+				if (dateValue < minDate) {
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						message: `Date must be after ${minDate.toLocaleDateString()}`,
+						path: [key],
+					});
+				}
+			}
+			
+			if (constraints.max) {
+				const maxDate = new Date(constraints.max);
+				if (dateValue > maxDate) {
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						message: `Date must be before ${maxDate.toLocaleDateString()}`,
+						path: [key],
+					});
+				}
+			}
+		}
+	});
+}
 
 export function buildFieldConfigFromJsonSchema(
 	jsonSchema: Record<string, unknown>,

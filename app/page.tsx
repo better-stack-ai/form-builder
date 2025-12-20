@@ -1,7 +1,7 @@
 "use client";
 
 import AutoForm, { AutoFormSubmit } from "@/components/ui/auto-form";
-import { buildFieldConfigFromJsonSchema, toJSONSchemaWithDates } from "@/components/ui/auto-form/utils";
+import { buildFieldConfigFromJsonSchema, toJSONSchemaWithDates, fromJSONSchemaWithDates } from "@/components/ui/auto-form/utils";
 import { z } from "zod";
 
 // Comprehensive schema demonstrating all available field types
@@ -26,6 +26,7 @@ const allFieldsSchema = z.object({
   }),
   
   // Password input
+  // must inclue letters and numbers
   password: z.string().min(8, "Password must be at least 8 characters").meta({
     label: "Password",
     description: "At least 8 characters",
@@ -70,7 +71,7 @@ const allFieldsSchema = z.object({
   }),
   
   // Date picker - now works with JSON Schema via the override helper!
-  birthDate: z.date().optional().meta({
+  birthDate: z.date().min(new Date("1900-01-01")).max(new Date("2025-12-31")).optional().meta({
     label: "Birth Date",
     description: "Your date of birth",
     fieldType: "date",
@@ -328,7 +329,7 @@ export default function Home() {
             </AutoFormSubmit>
           </AutoForm>
           <AutoForm
-            formSchema={z.fromJSONSchema(allFieldsJsonSchema)}
+            formSchema={fromJSONSchemaWithDates(allFieldsJsonSchema)}
             onSubmit={(values) => handleSubmit(values as FormData)}
             fieldConfig={buildFieldConfigFromJsonSchema(allFieldsJsonSchema)}
           >
