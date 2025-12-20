@@ -1,7 +1,7 @@
 "use client";
 
 import AutoForm, { AutoFormSubmit } from "@/components/ui/auto-form";
-import { buildFieldConfigFromJsonSchema } from "@/components/ui/auto-form/utils";
+import { buildFieldConfigFromJsonSchema, toJSONSchemaWithDates } from "@/components/ui/auto-form/utils";
 import { z } from "zod";
 
 // Comprehensive schema demonstrating all available field types
@@ -69,8 +69,12 @@ const allFieldsSchema = z.object({
     fieldType: "switch",
   }),
   
-  // Date picker
-  // birthDate: z.date().optional(),
+  // Date picker - now works with JSON Schema via the override helper!
+  birthDate: z.date().optional().meta({
+    label: "Birth Date",
+    description: "Your date of birth",
+    fieldType: "date",
+  }),
   
   // Select dropdown (enum)
   role: z.enum(["admin", "user", "moderator", "guest"]).meta({
@@ -163,14 +167,15 @@ const allFieldsSchema = z.object({
 
 type FormData = z.infer<typeof allFieldsSchema>;
 
-const allFieldsJsonSchema = allFieldsSchema.toJSONSchema();
+// Use our custom helper that handles z.date() -> { type: "string", format: "date-time" }
+const allFieldsJsonSchema = toJSONSchemaWithDates(allFieldsSchema);
 
 export default function Home() {
   const handleSubmit = (values: FormData) => {
     console.log("Form submitted:", values);
   };
 
-  console.log(allFieldsSchema.toJSONSchema());
+  console.log(toJSONSchemaWithDates(allFieldsSchema));
 
   return (
     <div className="min-h-screen ">
@@ -237,10 +242,11 @@ export default function Home() {
                 description: "Receive updates via email",
                 fieldType: "switch",
               },
-              // birthDate: {
-              //   label: "Birth Date",
-              //   description: "Your date of birth",
-              // },
+              birthDate: {
+                label: "Birth Date",
+                description: "Your date of birth",
+                fieldType: "date",
+              },
               role: {
                 label: "Role",
                 description: "Select your account role",

@@ -4,6 +4,32 @@ import type { DefaultValues } from "react-hook-form";
 import { z } from "zod";
 import type { AutoFormInputComponentProps, FieldConfig } from "./types";
 
+/**
+ * Convert a Zod schema to JSON Schema with proper date handling.
+ * 
+ * z.date() is not representable in JSON Schema by default.
+ * This helper uses the `override` option to convert z.date() fields
+ * to { type: "string", format: "date-time" } which is the standard
+ * JSON Schema representation for dates.
+ * 
+ * This approach is simpler than codecs for form use cases because:
+ * - Forms work directly with JavaScript Date objects
+ * - z.date() validates Date objects correctly
+ * - JSON Schema just needs a string representation for storage/transport
+ */
+export function toJSONSchemaWithDates<T extends z.ZodType>(schema: T) {
+  return z.toJSONSchema(schema, {
+    unrepresentable: "any",
+    override: (ctx) => {
+      const def = (ctx.zodSchema as any)?._zod?.def;
+      if (def?.type === "date") {
+        ctx.jsonSchema.type = "string";
+        ctx.jsonSchema.format = "date-time";
+      }
+    },
+  });
+}
+
 export const BUILTIN_FIELD_TYPES = [
 	"checkbox",
 	"date",
@@ -311,10 +337,14 @@ export function sortFieldsByOrder<SchemaType extends z.ZodObject<any, any>>(
 type JsonSchemaProperty = {
 	description?: string;
 	label?: string;
+	title?: string; // JSON Schema standard title property
 	fieldType?: string;
 	inputProps?: Record<string, unknown>;
+	placeholder?: string;
 	order?: number;
 	// JSON schema standard properties
+	type?: string;
+	format?: string; // e.g., "date-time", "email", "uri"
 	default?: unknown;
 	// Nested object properties
 	properties?: Record<string, JsonSchemaProperty>;
@@ -322,7 +352,7 @@ type JsonSchemaProperty = {
 
 export function buildFieldConfigFromJsonSchema(
 	jsonSchema: Record<string, unknown>,
-	storedFieldConfig?: Record<string, { fieldType?: string }>,
+	storedFieldConfig?: Record<string, { fieldType?: string }>, // TODO: figure out the use of this field and if we will break anything from btst by removing it
 	uploadImage?: (file: File) => Promise<string>,
 	fieldComponents?: Record<
 		string,
@@ -337,9 +367,11 @@ export function buildFieldConfigFromJsonSchema(
 	for (const [key, value] of Object.entries(properties)) {
 		const config: Record<string, unknown> = {};
 
-		// Extract label from meta
+		// Extract label from meta (support both 'label' and JSON Schema 'title')
 		if (value.label) {
 			config.label = value.label;
+		} else if (value.title) {
+			config.label = value.title;
 		}
 
 		// Extract description from meta
@@ -350,6 +382,11 @@ export function buildFieldConfigFromJsonSchema(
 		// Extract inputProps from meta (includes placeholder, type, etc.)
 		// Also merge in default value if present
 		const inputProps: Record<string, unknown> = value.inputProps ? { ...value.inputProps } : {};
+		
+		// Extract placeholder from JSON Schema
+		if (value.placeholder) {
+			inputProps.placeholder = value.placeholder;
+		}
 		
 		// Extract default value from JSON schema and pass it via inputProps
 		// Also mark field as not required if it has a default value
@@ -368,7 +405,14 @@ export function buildFieldConfigFromJsonSchema(
 		}
 
 		// Extract fieldType from meta or storedFieldConfig
-		const fieldType = value.fieldType ?? storedFieldConfig?.[key]?.fieldType;
+		// Also detect date-time format from JSON Schema (from z.date() -> toJSONSchema with override)
+		let fieldType = value.fieldType ?? storedFieldConfig?.[key]?.fieldType;
+		
+		// Auto-detect date fields from JSON Schema format: "date-time"
+		// This handles the roundtrip: z.date() -> toJSONSchema (with override) -> { type: "string", format: "date-time" }
+		if (!fieldType && value.type === "string" && value.format === "date-time") {
+			fieldType = "date";
+		}
 
 		if (fieldType) {
 			// 1. Check if there's a custom component in fieldComponents
