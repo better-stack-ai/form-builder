@@ -344,28 +344,14 @@ export function sortFieldsByOrder<SchemaType extends z.ZodObject<any, any>>(
   return sortedFields;
 }
 
+// Import shared JSON Schema property type for consistency with form-builder
+import type { JSONSchemaPropertyBase } from "../shared-form-types";
+
 /**
  * JSON schema property shape that includes FieldConfigItem-compatible metadata.
- * When using .meta() with FieldConfigItem shape, these get serialized into the JSON schema.
+ * Uses the shared type for consistency between form-builder and auto-form.
  */
-type JsonSchemaProperty = {
-	description?: string;
-	label?: string;
-	title?: string; // JSON Schema standard title property
-	fieldType?: string;
-	inputProps?: Record<string, unknown>;
-	placeholder?: string;
-	order?: number;
-	// JSON schema standard properties
-	type?: string;
-	format?: string; // e.g., "date-time", "email", "uri"
-	default?: unknown;
-	// Date format constraints (from toJSONSchemaWithDates)
-	formatMinimum?: string;
-	formatMaximum?: string;
-	// Nested object properties
-	properties?: Record<string, JsonSchemaProperty>;
-};
+type JsonSchemaProperty = JSONSchemaPropertyBase;
 
 /**
  * Create a Zod schema from JSON Schema with proper date handling.

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FormBuilder, defaultComponents, type JSONSchema } from "@/components/ui/form-builder";
 import { z } from "zod";
+import { filledFormValues } from "@/lib/constants";
 
 const jsonSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -231,16 +232,41 @@ const jsonSchema = {
 } satisfies z.core.JSONSchema.JSONSchema;
 
 export default function BuilderPage() {
-  const [schema, setSchema] = useState<JSONSchema>(jsonSchema);
+  const [schemaEmpty, setSchemaEmpty] = useState<JSONSchema>(jsonSchema);
+  const [schemaFilled, setSchemaFilled] = useState<JSONSchema>(jsonSchema);
 
   return (
-    <div className="min-h-screen lg:h-screen flex flex-col">
-      <FormBuilder
-        components={defaultComponents}
-        value={schema}
-        onChange={setSchema}
-        className="flex-1"
-      />
+    <div className="min-h-screen flex flex-col">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4 flex-1">
+        {/* Empty Form */}
+        <div className="flex flex-col border rounded-lg overflow-hidden">
+          <div className="bg-muted px-4 py-2 border-b">
+            <h2 className="text-lg font-semibold">Empty Form (New)</h2>
+            <p className="text-sm text-muted-foreground">Form with no pre-filled values</p>
+          </div>
+          <FormBuilder
+            components={defaultComponents}
+            value={schemaEmpty}
+            onChange={setSchemaEmpty}
+            className="flex-1"
+          />
+        </div>
+
+        {/* Filled Form - Edit State */}
+        <div className="flex flex-col border rounded-lg overflow-hidden">
+          <div className="bg-muted px-4 py-2 border-b">
+            <h2 className="text-lg font-semibold">Filled Form (Edit)</h2>
+            <p className="text-sm text-muted-foreground">Form pre-filled with valid values</p>
+          </div>
+          <FormBuilder
+            components={defaultComponents}
+            value={schemaFilled}
+            onChange={setSchemaFilled}
+            defaultValues={filledFormValues}
+            className="flex-1"
+          />
+        </div>
+      </div>
     </div>
   );
 }

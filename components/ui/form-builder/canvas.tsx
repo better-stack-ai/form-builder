@@ -39,8 +39,6 @@ function DropZone({ id, isDraggingFromPalette }: DropZoneProps) {
 interface CanvasProps {
   fields: FormBuilderField[];
   components: FormBuilderComponentDefinition[];
-  selectedFieldId: string | null;
-  onSelectField: (id: string | null) => void;
   onEditField: (id: string) => void;
   onDeleteField: (id: string) => void;
   isDraggingFromPalette: boolean;
@@ -50,8 +48,6 @@ interface CanvasProps {
 export function Canvas({
   fields,
   components,
-  selectedFieldId,
-  onSelectField,
   onEditField,
   onDeleteField,
   isDraggingFromPalette,
@@ -74,7 +70,6 @@ export function Canvas({
           : "border-muted-foreground/20",
         className
       )}
-      onClick={() => onSelectField(null)}
     >
       {fields.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
@@ -98,8 +93,6 @@ export function Canvas({
                   field={field}
                   index={index}
                   component={getComponent(field.type)}
-                  isSelected={field.id === selectedFieldId}
-                  onSelect={() => onSelectField(field.id)}
                   onEdit={() => onEditField(field.id)}
                   onDelete={() => onDeleteField(field.id)}
                 />

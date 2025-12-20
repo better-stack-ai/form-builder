@@ -14,11 +14,26 @@ import {
   Palette,
 } from "lucide-react";
 import { z } from "zod";
-import type {
-  FormBuilderComponentDefinition,
-  FormBuilderFieldProps,
-  JSONSchemaProperty,
+import {
+  defineComponent,
+  type FormBuilderComponentDefinition,
+  type StringFieldProps,
+  type NumberFieldProps,
+  type BooleanFieldProps,
+  type DateFieldProps,
+  type EnumFieldProps,
+  type JSONSchemaProperty,
 } from "../types";
+import {
+  baseMetaSchema,
+  baseMetaSchemaWithPlaceholder,
+  stringValidationSchema,
+  numberValidationSchema,
+  booleanValidationSchema,
+  dateValidationSchema,
+  enumOptionsSchema,
+  DEFAULT_VALUE_SCHEMAS,
+} from "../validation-schemas";
 
 /**
  * Helper to convert a value to a number, handling empty strings and undefined
@@ -56,19 +71,12 @@ function getLabel(prop: JSONSchemaProperty, key: string): string {
   return prop.label || prop.title || key;
 }
 
-// Base properties schema shared by most components
-const basePropertiesSchema = {
-  label: z.string().min(1).meta({ label: "Label" }),
-  placeholder: z.string().optional().meta({ label: "Placeholder" }),
-  description: z.string().optional().meta({ label: "Description" }),
-  required: z.boolean().default(false).meta({ label: "Required", fieldType: "switch" }),
-};
-
 /**
  * Text Input Field
  */
-export const textFieldDefinition: FormBuilderComponentDefinition = {
+export const textFieldDefinition = defineComponent<"string">({
   type: "text",
+  backingType: "string",
   label: "Text Input",
   icon: Type,
   defaultProps: {
@@ -76,17 +84,15 @@ export const textFieldDefinition: FormBuilderComponentDefinition = {
     placeholder: "",
     required: false,
   },
-  propertiesSchema: z.object({
-    ...basePropertiesSchema,
-    minLength: z.number().int().min(0).optional().meta({ label: "Min Length" }),
-    maxLength: z.number().int().min(1).optional().meta({ label: "Max Length" }),
-  }),
-  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+  propertiesSchema: baseMetaSchemaWithPlaceholder
+    .merge(stringValidationSchema)
+    .merge(z.object({ defaultValue: DEFAULT_VALUE_SCHEMAS.string })),
+  toJSONSchema: (props: StringFieldProps): JSONSchemaProperty => ({
     type: "string",
     label: props.label,
     description: props.description,
     inputProps: buildInputProps(props.placeholder),
-    default: props.defaultValue as string | undefined,
+    default: props.defaultValue,
     minLength: toNumber(props.minLength),
     maxLength: toNumber(props.maxLength),
   }),
@@ -110,19 +116,20 @@ export const textFieldDefinition: FormBuilderComponentDefinition = {
         placeholder: getPlaceholder(prop),
         description: prop.description,
         required: isRequired,
-        defaultValue: prop.default,
+        defaultValue: prop.default as string | undefined,
         minLength: prop.minLength,
         maxLength: prop.maxLength,
       },
     };
   },
-};
+});
 
 /**
  * Email Input Field
  */
-export const emailFieldDefinition: FormBuilderComponentDefinition = {
+export const emailFieldDefinition = defineComponent<"string">({
   type: "email",
+  backingType: "string",
   label: "Email",
   icon: Mail,
   defaultProps: {
@@ -130,15 +137,14 @@ export const emailFieldDefinition: FormBuilderComponentDefinition = {
     placeholder: "email@example.com",
     required: false,
   },
-  propertiesSchema: z.object({
-    ...basePropertiesSchema,
-  }),
-  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+  propertiesSchema: baseMetaSchemaWithPlaceholder
+    .merge(z.object({ defaultValue: DEFAULT_VALUE_SCHEMAS.string })),
+  toJSONSchema: (props: StringFieldProps): JSONSchemaProperty => ({
     type: "string",
     label: props.label,
     description: props.description,
     inputProps: buildInputProps(props.placeholder, "email"),
-    default: props.defaultValue as string | undefined,
+    default: props.defaultValue,
     format: "email",
   }),
   fromJSONSchema: (prop, key, isRequired) => {
@@ -156,34 +162,34 @@ export const emailFieldDefinition: FormBuilderComponentDefinition = {
         placeholder: getPlaceholder(prop),
         description: prop.description,
         required: isRequired,
-        defaultValue: prop.default,
+        defaultValue: prop.default as string | undefined,
       },
     };
   },
-};
+});
 
 /**
  * Number Input Field
  */
-export const numberFieldDefinition: FormBuilderComponentDefinition = {
+export const numberFieldDefinition = defineComponent<"number">({
   type: "number",
+  backingType: "number",
   label: "Number",
   icon: Hash,
   defaultProps: {
     label: "Number",
     required: false,
   },
-  propertiesSchema: z.object({
-    ...basePropertiesSchema,
-    min: z.number().optional().meta({ label: "Minimum" }),
-    max: z.number().optional().meta({ label: "Maximum" }),
-  }),
-  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+  propertiesSchema: baseMetaSchemaWithPlaceholder
+    .merge(numberValidationSchema)
+    .merge(z.object({ defaultValue: DEFAULT_VALUE_SCHEMAS.number })),
+  toJSONSchema: (props: NumberFieldProps): JSONSchemaProperty => ({
     type: "number",
     label: props.label,
     description: props.description,
     inputProps: buildInputProps(props.placeholder),
-    default: toNumber(props.defaultValue),
+    default: props.defaultValue,
+    // toNumber handles form input which may come as strings
     minimum: toNumber(props.min),
     maximum: toNumber(props.max),
   }),
@@ -199,19 +205,20 @@ export const numberFieldDefinition: FormBuilderComponentDefinition = {
         placeholder: getPlaceholder(prop),
         description: prop.description,
         required: isRequired,
-        defaultValue: prop.default,
+        defaultValue: prop.default as number | undefined,
         min: prop.minimum,
         max: prop.maximum,
       },
     };
   },
-};
+});
 
 /**
  * Textarea Field
  */
-export const textareaFieldDefinition: FormBuilderComponentDefinition = {
+export const textareaFieldDefinition = defineComponent<"string">({
   type: "textarea",
+  backingType: "string",
   label: "Text Area",
   icon: AlignLeft,
   defaultProps: {
@@ -219,18 +226,16 @@ export const textareaFieldDefinition: FormBuilderComponentDefinition = {
     placeholder: "",
     required: false,
   },
-  propertiesSchema: z.object({
-    ...basePropertiesSchema,
-    minLength: z.number().int().min(0).optional().meta({ label: "Min Length" }),
-    maxLength: z.number().int().min(1).optional().meta({ label: "Max Length" }),
-  }),
-  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+  propertiesSchema: baseMetaSchemaWithPlaceholder
+    .merge(stringValidationSchema)
+    .merge(z.object({ defaultValue: DEFAULT_VALUE_SCHEMAS.string })),
+  toJSONSchema: (props: StringFieldProps): JSONSchemaProperty => ({
     type: "string",
     label: props.label,
     description: props.description,
     fieldType: "textarea",
     inputProps: buildInputProps(props.placeholder),
-    default: props.defaultValue as string | undefined,
+    default: props.defaultValue,
     minLength: toNumber(props.minLength),
     maxLength: toNumber(props.maxLength),
   }),
@@ -246,36 +251,34 @@ export const textareaFieldDefinition: FormBuilderComponentDefinition = {
         placeholder: getPlaceholder(prop),
         description: prop.description,
         required: isRequired,
-        defaultValue: prop.default,
+        defaultValue: prop.default as string | undefined,
         minLength: prop.minLength,
         maxLength: prop.maxLength,
       },
     };
   },
-};
+});
 
 /**
  * Checkbox Field
  */
-export const checkboxFieldDefinition: FormBuilderComponentDefinition = {
+export const checkboxFieldDefinition = defineComponent<"boolean">({
   type: "checkbox",
+  backingType: "boolean",
   label: "Checkbox",
   icon: CheckSquare,
   defaultProps: {
     label: "Checkbox",
     required: false,
   },
-  propertiesSchema: z.object({
-    label: z.string().min(1).meta({ label: "Label" }),
-    description: z.string().optional().meta({ label: "Description" }),
-    required: z.boolean().default(false).meta({ label: "Required", fieldType: "switch" }),
-    defaultValue: z.boolean().default(false).meta({ label: "Default Value", fieldType: "switch" }),
-  }),
-  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+  propertiesSchema: baseMetaSchema
+    .merge(booleanValidationSchema)
+    .merge(z.object({ defaultValue: DEFAULT_VALUE_SCHEMAS.boolean })),
+  toJSONSchema: (props: BooleanFieldProps): JSONSchemaProperty => ({
     type: "boolean",
     label: props.label,
     description: props.description,
-    default: props.defaultValue as boolean | undefined,
+    default: props.defaultValue,
   }),
   fromJSONSchema: (prop, key, isRequired) => {
     if (prop.type !== "boolean" || prop.fieldType === "switch") {
@@ -288,35 +291,33 @@ export const checkboxFieldDefinition: FormBuilderComponentDefinition = {
         label: getLabel(prop, key),
         description: prop.description,
         required: isRequired,
-        defaultValue: prop.default,
+        defaultValue: prop.default as boolean | undefined,
       },
     };
   },
-};
+});
 
 /**
  * Switch Field
  */
-export const switchFieldDefinition: FormBuilderComponentDefinition = {
+export const switchFieldDefinition = defineComponent<"boolean">({
   type: "switch",
+  backingType: "boolean",
   label: "Switch",
   icon: ToggleLeft,
   defaultProps: {
     label: "Switch",
     required: false,
   },
-  propertiesSchema: z.object({
-    label: z.string().min(1).meta({ label: "Label" }),
-    description: z.string().optional().meta({ label: "Description" }),
-    required: z.boolean().default(false).meta({ label: "Required", fieldType: "switch" }),
-    defaultValue: z.boolean().default(false).meta({ label: "Default Value", fieldType: "switch" }),
-  }),
-  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+  propertiesSchema: baseMetaSchema
+    .merge(booleanValidationSchema)
+    .merge(z.object({ defaultValue: DEFAULT_VALUE_SCHEMAS.boolean })),
+  toJSONSchema: (props: BooleanFieldProps): JSONSchemaProperty => ({
     type: "boolean",
     label: props.label,
     description: props.description,
     fieldType: "switch",
-    default: props.defaultValue as boolean | undefined,
+    default: props.defaultValue,
   }),
   fromJSONSchema: (prop, key, isRequired) => {
     if (prop.type !== "boolean" || prop.fieldType !== "switch") {
@@ -329,17 +330,18 @@ export const switchFieldDefinition: FormBuilderComponentDefinition = {
         label: getLabel(prop, key),
         description: prop.description,
         required: isRequired,
-        defaultValue: prop.default,
+        defaultValue: prop.default as boolean | undefined,
       },
     };
   },
-};
+});
 
 /**
  * Select Field
  */
-export const selectFieldDefinition: FormBuilderComponentDefinition = {
+export const selectFieldDefinition = defineComponent<"enum">({
   type: "select",
+  backingType: "enum",
   label: "Select",
   icon: ChevronDown,
   defaultProps: {
@@ -347,26 +349,15 @@ export const selectFieldDefinition: FormBuilderComponentDefinition = {
     required: false,
     options: ["Option 1", "Option 2", "Option 3"],
   },
-  propertiesSchema: z.object({
-    label: z.string().min(1).meta({ label: "Label" }),
-    placeholder: z.string().optional().meta({ label: "Placeholder" }),
-    description: z.string().optional().meta({ label: "Description" }),
-    required: z.boolean().default(false).meta({ label: "Required", fieldType: "switch" }),
-    defaultValue: z.string().optional().meta({ label: "Default Value", description: "Must match one of the options" }),
-    options: z
-      .string()
-      .meta({
-        label: "Options (one per line)",
-        fieldType: "textarea",
-        description: "Enter each option on a new line",
-      }),
-  }),
-  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+  propertiesSchema: baseMetaSchemaWithPlaceholder
+    .merge(enumOptionsSchema)
+    .merge(z.object({ defaultValue: DEFAULT_VALUE_SCHEMAS.enum })),
+  toJSONSchema: (props: EnumFieldProps): JSONSchemaProperty => ({
     type: "string",
     label: props.label,
     description: props.description,
     inputProps: buildInputProps(props.placeholder),
-    default: props.defaultValue as string | undefined,
+    default: props.defaultValue,
     enum: props.options,
   }),
   fromJSONSchema: (prop, key, isRequired) => {
@@ -381,18 +372,19 @@ export const selectFieldDefinition: FormBuilderComponentDefinition = {
         placeholder: getPlaceholder(prop),
         description: prop.description,
         required: isRequired,
-        defaultValue: prop.default,
+        defaultValue: prop.default as string | undefined,
         options: prop.enum,
       },
     };
   },
-};
+});
 
 /**
  * Radio Group Field
  */
-export const radioFieldDefinition: FormBuilderComponentDefinition = {
+export const radioFieldDefinition = defineComponent<"enum">({
   type: "radio",
+  backingType: "enum",
   label: "Radio Group",
   icon: Circle,
   defaultProps: {
@@ -400,25 +392,15 @@ export const radioFieldDefinition: FormBuilderComponentDefinition = {
     required: false,
     options: ["Option 1", "Option 2", "Option 3"],
   },
-  propertiesSchema: z.object({
-    label: z.string().min(1).meta({ label: "Label" }),
-    description: z.string().optional().meta({ label: "Description" }),
-    required: z.boolean().default(false).meta({ label: "Required", fieldType: "switch" }),
-    defaultValue: z.string().optional().meta({ label: "Default Value", description: "Must match one of the options" }),
-    options: z
-      .string()
-      .meta({
-        label: "Options (one per line)",
-        fieldType: "textarea",
-        description: "Enter each option on a new line",
-      }),
-  }),
-  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+  propertiesSchema: baseMetaSchema
+    .merge(enumOptionsSchema)
+    .merge(z.object({ defaultValue: DEFAULT_VALUE_SCHEMAS.enum })),
+  toJSONSchema: (props: EnumFieldProps): JSONSchemaProperty => ({
     type: "string",
     label: props.label,
     description: props.description,
     fieldType: "radio",
-    default: props.defaultValue as string | undefined,
+    default: props.defaultValue,
     enum: props.options,
   }),
   fromJSONSchema: (prop, key, isRequired) => {
@@ -432,18 +414,19 @@ export const radioFieldDefinition: FormBuilderComponentDefinition = {
         label: getLabel(prop, key),
         description: prop.description,
         required: isRequired,
-        defaultValue: prop.default,
+        defaultValue: prop.default as string | undefined,
         options: prop.enum,
       },
     };
   },
-};
+});
 
 /**
  * Password Input Field
  */
-export const passwordFieldDefinition: FormBuilderComponentDefinition = {
+export const passwordFieldDefinition = defineComponent<"string">({
   type: "password",
+  backingType: "string",
   label: "Password",
   icon: Lock,
   defaultProps: {
@@ -451,17 +434,15 @@ export const passwordFieldDefinition: FormBuilderComponentDefinition = {
     placeholder: "••••••••",
     required: false,
   },
-  propertiesSchema: z.object({
-    ...basePropertiesSchema,
-    minLength: z.number().int().min(0).optional().meta({ label: "Min Length" }),
-    maxLength: z.number().int().min(1).optional().meta({ label: "Max Length" }),
-  }),
-  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+  propertiesSchema: baseMetaSchemaWithPlaceholder
+    .merge(stringValidationSchema)
+    .merge(z.object({ defaultValue: DEFAULT_VALUE_SCHEMAS.string })),
+  toJSONSchema: (props: StringFieldProps): JSONSchemaProperty => ({
     type: "string",
     label: props.label,
     description: props.description,
     inputProps: buildInputProps(props.placeholder, "password"),
-    default: props.defaultValue as string | undefined,
+    default: props.defaultValue,
     minLength: toNumber(props.minLength),
     maxLength: toNumber(props.maxLength),
   }),
@@ -480,19 +461,20 @@ export const passwordFieldDefinition: FormBuilderComponentDefinition = {
         placeholder: getPlaceholder(prop),
         description: prop.description,
         required: isRequired,
-        defaultValue: prop.default,
+        defaultValue: prop.default as string | undefined,
         minLength: prop.minLength,
         maxLength: prop.maxLength,
       },
     };
   },
-};
+});
 
 /**
  * URL/Website Input Field
  */
-export const urlFieldDefinition: FormBuilderComponentDefinition = {
+export const urlFieldDefinition = defineComponent<"string">({
   type: "url",
+  backingType: "string",
   label: "Website URL",
   icon: Globe,
   defaultProps: {
@@ -500,15 +482,14 @@ export const urlFieldDefinition: FormBuilderComponentDefinition = {
     placeholder: "https://example.com",
     required: false,
   },
-  propertiesSchema: z.object({
-    ...basePropertiesSchema,
-  }),
-  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+  propertiesSchema: baseMetaSchemaWithPlaceholder
+    .merge(z.object({ defaultValue: DEFAULT_VALUE_SCHEMAS.string })),
+  toJSONSchema: (props: StringFieldProps): JSONSchemaProperty => ({
     type: "string",
     label: props.label,
     description: props.description,
     inputProps: buildInputProps(props.placeholder),
-    default: props.defaultValue as string | undefined,
+    default: props.defaultValue,
     format: "uri",
   }),
   fromJSONSchema: (prop, key, isRequired) => {
@@ -523,17 +504,18 @@ export const urlFieldDefinition: FormBuilderComponentDefinition = {
         placeholder: getPlaceholder(prop),
         description: prop.description,
         required: isRequired,
-        defaultValue: prop.default,
+        defaultValue: prop.default as string | undefined,
       },
     };
   },
-};
+});
 
 /**
  * Phone Input Field
  */
-export const phoneFieldDefinition: FormBuilderComponentDefinition = {
+export const phoneFieldDefinition = defineComponent<"string">({
   type: "phone",
+  backingType: "string",
   label: "Phone Number",
   icon: Phone,
   defaultProps: {
@@ -541,15 +523,14 @@ export const phoneFieldDefinition: FormBuilderComponentDefinition = {
     placeholder: "+1 (555) 123-4567",
     required: false,
   },
-  propertiesSchema: z.object({
-    ...basePropertiesSchema,
-  }),
-  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+  propertiesSchema: baseMetaSchemaWithPlaceholder
+    .merge(z.object({ defaultValue: DEFAULT_VALUE_SCHEMAS.string })),
+  toJSONSchema: (props: StringFieldProps): JSONSchemaProperty => ({
     type: "string",
     label: props.label,
     description: props.description,
     inputProps: buildInputProps(props.placeholder, "tel"),
-    default: props.defaultValue as string | undefined,
+    default: props.defaultValue,
   }),
   fromJSONSchema: (prop, key, isRequired) => {
     if (
@@ -566,11 +547,11 @@ export const phoneFieldDefinition: FormBuilderComponentDefinition = {
         placeholder: getPlaceholder(prop),
         description: prop.description,
         required: isRequired,
-        defaultValue: prop.default,
+        defaultValue: prop.default as string | undefined,
       },
     };
   },
-};
+});
 
 /**
  * Date Picker Field
@@ -578,20 +559,18 @@ export const phoneFieldDefinition: FormBuilderComponentDefinition = {
  * Stores dates as ISO datetime strings in JSON Schema (format: "date-time")
  * but works with JavaScript Date objects in the form UI.
  */
-export const dateFieldDefinition: FormBuilderComponentDefinition = {
+export const dateFieldDefinition = defineComponent<"date">({
   type: "date",
+  backingType: "date",
   label: "Date Picker",
   icon: Calendar,
   defaultProps: {
     label: "Date",
     required: false,
   },
-  propertiesSchema: z.object({
-    label: z.string().min(1).meta({ label: "Label" }),
-    description: z.string().optional().meta({ label: "Description" }),
-    required: z.boolean().default(false).meta({ label: "Required", fieldType: "switch" }),
-  }),
-  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+  propertiesSchema: baseMetaSchema
+    .merge(dateValidationSchema),
+  toJSONSchema: (props: DateFieldProps): JSONSchemaProperty => ({
     type: "string",
     format: "date-time",
     fieldType: "date",
@@ -616,7 +595,7 @@ export const dateFieldDefinition: FormBuilderComponentDefinition = {
       },
     };
   },
-};
+});
 
 /**
  * Color Picker Field
@@ -625,29 +604,28 @@ export const dateFieldDefinition: FormBuilderComponentDefinition = {
  * with the form-builder and auto-form systems. The color is stored as a
  * hex string (e.g., "#3b82f6") in the JSON Schema.
  */
-export const colorFieldDefinition: FormBuilderComponentDefinition = {
+export const colorFieldDefinition = defineComponent<"string">({
   type: "color",
+  backingType: "string",
   label: "Color Picker",
   icon: Palette,
   defaultProps: {
     label: "Color",
     required: false,
   },
-  propertiesSchema: z.object({
-    label: z.string().min(1).meta({ label: "Label" }),
-    description: z.string().optional().meta({ label: "Description" }),
-    required: z.boolean().default(false).meta({ label: "Required", fieldType: "switch" }),
-    defaultValue: z.string().optional().meta({ 
-      label: "Default Color",
-      description: "Enter a hex color like #3b82f6",
-    }),
-  }),
-  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+  propertiesSchema: baseMetaSchema
+    .merge(z.object({
+      defaultValue: z.string().optional().meta({ 
+        label: "Default Color",
+        description: "Enter a hex color like #3b82f6",
+      }),
+    })),
+  toJSONSchema: (props: StringFieldProps): JSONSchemaProperty => ({
     type: "string",
     label: props.label,
     description: props.description,
     fieldType: "color",
-    default: props.defaultValue as string | undefined,
+    default: props.defaultValue,
     // Pattern for hex colors
     pattern: "^#[0-9A-Fa-f]{6}$",
   }),
@@ -663,15 +641,18 @@ export const colorFieldDefinition: FormBuilderComponentDefinition = {
         label: getLabel(prop, key),
         description: prop.description,
         required: isRequired,
-        defaultValue: prop.default,
+        defaultValue: prop.default as string | undefined,
       },
     };
   },
-};
+});
 
 /**
  * All default components in order of specificity (more specific first)
  * This order matters for fromJSONSchema matching
+ * 
+ * Note: colorFieldDefinition is exported separately as an example of a custom
+ * component that can be added via the `components` prop.
  */
 export const defaultComponents: FormBuilderComponentDefinition[] = [
   // Specific types first
@@ -680,7 +661,6 @@ export const defaultComponents: FormBuilderComponentDefinition[] = [
   urlFieldDefinition,
   phoneFieldDefinition,
   dateFieldDefinition,
-  colorFieldDefinition,
   textareaFieldDefinition,
   switchFieldDefinition,
   radioFieldDefinition,

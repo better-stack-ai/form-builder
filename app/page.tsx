@@ -1,8 +1,11 @@
 "use client";
 
 import AutoForm, { AutoFormSubmit } from "@/components/ui/auto-form";
+import { FieldInputProps } from "@/components/ui/auto-form/types";
 import { buildFieldConfigFromJsonSchema, toJSONSchemaWithDates, fromJSONSchemaWithDates } from "@/components/ui/auto-form/utils";
 import { z } from "zod";
+
+import { filledFormValues } from "@/lib/constants";
 
 // Comprehensive schema demonstrating all available field types
 // Using FieldConfigItem shape in .meta() for consistency
@@ -13,7 +16,7 @@ const allFieldsSchema = z.object({
     description: "Your unique username for the platform",
     inputProps: {
       placeholder: "johndoe",
-    },
+    } satisfies FieldInputProps,
   }),
   
   // Email input
@@ -192,7 +195,7 @@ export default function Home() {
           </p>
         </header>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl grid grid-cols-2 gap-2">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl grid grid-cols-3 gap-2">
           <AutoForm
             formSchema={allFieldsSchema}
             onSubmit={handleSubmit}
@@ -332,6 +335,16 @@ export default function Home() {
             formSchema={fromJSONSchemaWithDates(allFieldsJsonSchema)}
             onSubmit={(values) => handleSubmit(values as FormData)}
             fieldConfig={buildFieldConfigFromJsonSchema(allFieldsJsonSchema)}
+          >
+            <AutoFormSubmit className="mt-6 w-full">
+              Submit Form
+            </AutoFormSubmit>
+          </AutoForm>
+          <AutoForm
+            formSchema={fromJSONSchemaWithDates(allFieldsJsonSchema)}
+            onSubmit={(values) => handleSubmit(values as FormData)}
+            fieldConfig={buildFieldConfigFromJsonSchema(allFieldsJsonSchema)}
+            values={filledFormValues}
           >
             <AutoFormSubmit className="mt-6 w-full">
               Submit Form

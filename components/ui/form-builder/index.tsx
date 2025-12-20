@@ -36,9 +36,10 @@ import type {
   DragData,
   PaletteDragData,
 } from "./types";
+import type { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
 
 // Re-export types and components for external use
-export { defaultComponents } from "./components";
+export { defaultComponents, colorFieldDefinition } from "./components";
 export type {
   FormBuilderComponentDefinition,
   FormBuilderField,
@@ -55,6 +56,37 @@ interface FormBuilderProps {
   onChange?: (schema: JSONSchema) => void;
   /** Additional CSS classes */
   className?: string;
+  /** 
+   * Custom field components for the form preview.
+   * Maps fieldType names to React components that render the field.
+   * These are merged with the default custom components (like color picker).
+   * 
+   * @example
+   * ```tsx
+   * <FormBuilder
+   *   fieldComponents={{
+   *     rating: RatingComponent,
+   *     signature: SignatureComponent,
+   *   }}
+   * />
+   * ```
+   */
+  fieldComponents?: Record<string, React.ComponentType<AutoFormInputComponentProps>>;
+  /**
+   * Default values to pre-populate the form preview with.
+   * Useful for edit scenarios where the form should start with existing data.
+   * 
+   * @example
+   * ```tsx
+   * <FormBuilder
+   *   defaultValues={{
+   *     username: "johndoe",
+   *     email: "john@example.com",
+   *   }}
+   * />
+   * ```
+   */
+  defaultValues?: Record<string, unknown>;
 }
 
 export function FormBuilder({
@@ -62,6 +94,8 @@ export function FormBuilder({
   value,
   onChange,
   className,
+  fieldComponents,
+  defaultValues,
 }: FormBuilderProps) {
   // Stable ID for DndContext to prevent hydration mismatch
   const dndContextId = useId();
@@ -71,7 +105,6 @@ export function FormBuilder({
   const [fields, setFields] = useState<FormBuilderField[]>(() =>
     value ? jsonSchemaToFields(value, components) : []
   );
-  const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [editDialogFieldId, setEditDialogFieldId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
 
@@ -194,7 +227,6 @@ export function FormBuilder({
         const newFields = [...fields];
         newFields.splice(insertIndex, 0, newField);
         setFields(newFields);
-        setSelectedFieldId(newField.id);
         notifyChange(newFields);
       }
       return;
@@ -222,13 +254,9 @@ export function FormBuilder({
           : f
       );
       setFields(newFields);
-      // Update selectedFieldId if the field ID changed
-      if (newId && selectedFieldId === id) {
-        setSelectedFieldId(newId);
-      }
       notifyChange(newFields);
     },
-    [fields, selectedFieldId, notifyChange]
+    [fields, notifyChange]
   );
 
   // Open edit dialog for a field
@@ -241,12 +269,9 @@ export function FormBuilder({
     (id: string) => {
       const newFields = fields.filter((f) => f.id !== id);
       setFields(newFields);
-      if (selectedFieldId === id) {
-        setSelectedFieldId(null);
-      }
       notifyChange(newFields);
     },
-    [fields, selectedFieldId, notifyChange]
+    [fields, notifyChange]
   );
 
   // Get edit dialog field and its component
@@ -276,8 +301,6 @@ export function FormBuilder({
             <Canvas
               fields={fields}
               components={components}
-              selectedFieldId={selectedFieldId}
-              onSelectField={setSelectedFieldId}
               onEditField={handleEditField}
               onDeleteField={handleDeleteField}
               isDraggingFromPalette={activeDragData?.type === "palette"}
@@ -298,7 +321,7 @@ export function FormBuilder({
                 </TabsList>
               </div>
               <TabsContent value="preview" className="flex-1 m-0 lg:overflow-auto">
-                <FormPreview schema={currentSchema} />
+                <FormPreview schema={currentSchema} fieldComponents={fieldComponents} defaultValues={defaultValues} />
               </TabsContent>
               <TabsContent value="schema" className="flex-1 m-0 p-4 lg:overflow-auto">
                 <div className="rounded-lg border bg-muted/50 p-4">

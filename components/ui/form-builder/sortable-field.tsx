@@ -11,8 +11,6 @@ interface SortableFieldProps {
   field: FormBuilderField;
   index: number;
   component: FormBuilderComponentDefinition | undefined;
-  isSelected: boolean;
-  onSelect: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -21,8 +19,6 @@ export function SortableField({
   field,
   index,
   component,
-  isSelected,
-  onSelect,
   onEdit,
   onDelete,
 }: SortableFieldProps) {
@@ -56,14 +52,9 @@ export function SortableField({
       className={cn(
         "group flex items-center gap-2 p-3 rounded-lg border bg-card",
         "transition-all duration-200",
-        isSelected && "ring-2 ring-primary border-primary",
         isDragging && "opacity-50 shadow-lg z-50",
         !isDragging && "hover:border-muted-foreground/30"
       )}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect();
-      }}
     >
       {/* Drag Handle */}
       <div

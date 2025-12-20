@@ -7,26 +7,24 @@ import { buildFieldConfigFromJsonSchema } from "@/components/ui/auto-form/utils"
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { JSONSchema } from "./types";
-import { AutoFormColorPicker } from "@/components/ui/color-picker";
 import type { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
-
-/**
- * Custom field components for the form preview.
- * 
- * This demonstrates how to integrate custom components (like the ColorPicker)
- * with the auto-form system. The key ("color") matches the fieldType in the
- * JSON Schema, and the value is the React component that renders the field.
- */
-const customFieldComponents: Record<string, React.ComponentType<AutoFormInputComponentProps>> = {
-  color: AutoFormColorPicker,
-};
 
 interface FormPreviewProps {
   schema: JSONSchema;
   className?: string;
+  /** 
+   * Additional custom field components to use in the form preview.
+   * These are merged with the default components (color picker, etc.).
+   */
+  fieldComponents?: Record<string, React.ComponentType<AutoFormInputComponentProps>>;
+  /**
+   * Default values to pre-populate the form with.
+   * Useful for edit scenarios where the form should start with existing data.
+   */
+  defaultValues?: Record<string, unknown>;
 }
 
-export function FormPreview({ schema, className }: FormPreviewProps) {
+export function FormPreview({ schema, className, fieldComponents, defaultValues }: FormPreviewProps) {
   const [submittedValues, setSubmittedValues] = useState<Record<string, unknown> | null>(null);
 
   // Create Zod schema from JSON Schema
@@ -42,6 +40,9 @@ export function FormPreview({ schema, className }: FormPreviewProps) {
     }
   }, [schema]);
 
+  // Custom field components for rendering (passed via props)
+  const mergedFieldComponents = useMemo(() => fieldComponents ?? {}, [fieldComponents]);
+
   // Build field config from JSON Schema with custom components
   const fieldConfig = useMemo(() => {
     try {
@@ -49,13 +50,13 @@ export function FormPreview({ schema, className }: FormPreviewProps) {
         schema as unknown as Record<string, unknown>,
         undefined, // storedFieldConfig
         undefined, // uploadImage
-        customFieldComponents
+        mergedFieldComponents
       );
     } catch (error) {
       console.error("Failed to build field config:", error);
       return {};
     }
-  }, [schema]);
+  }, [schema, mergedFieldComponents]);
 
   const handleSubmit = (values: unknown) => {
     setSubmittedValues(values as Record<string, unknown>);
@@ -104,6 +105,7 @@ export function FormPreview({ schema, className }: FormPreviewProps) {
                 formSchema={zodSchema}
                 onSubmit={handleSubmit}
                 fieldConfig={fieldConfig}
+                values={defaultValues}
               >
                 <AutoFormSubmit className="w-full mt-4">
                   Submit

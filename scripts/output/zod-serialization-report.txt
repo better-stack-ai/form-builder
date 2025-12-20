@@ -1,0 +1,570 @@
+================================================================================
+ZOD SERIALIZATION ANALYSIS REPORT
+Generated: 2025-12-20T17:11:35.518Z
+Zod Version: undefined
+================================================================================
+
+## STRING TYPE
+----------------------------------------
+
+### z.string()
+Description: Basic string
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string"
+}
+
+### z.string().min(5)
+Description: String with minLength
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "minLength": 5
+}
+
+### z.string().max(100)
+Description: String with maxLength
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "maxLength": 100
+}
+
+### z.string().min(5).max(100)
+Description: String with minLength and maxLength
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "minLength": 5,
+  "maxLength": 100
+}
+
+### z.string().length(10)
+Description: String with exact length
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "minLength": 10,
+  "maxLength": 10
+}
+
+### z.string().email()
+Description: Email format
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "format": "email",
+  "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+}
+
+### z.string().url()
+Description: URL format
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "format": "uri"
+}
+
+### z.string().regex(/^[a-z]+$/)
+Description: Regex pattern
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "pattern": "^[a-z]+$"
+}
+
+### z.string().startsWith("hello")
+Description: Starts with constraint
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "pattern": "^hello.*"
+}
+
+### z.string().endsWith("world")
+Description: Ends with constraint
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "pattern": ".*world$"
+}
+
+### z.string().includes("test")
+Description: Includes constraint
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "pattern": "test"
+}
+
+### z.string().default("hello")
+Description: String with default value
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "default": "hello",
+  "type": "string"
+}
+
+### z.string().optional()
+Description: Optional string
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string"
+}
+
+### z.string().nullable()
+Description: Nullable string
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "anyOf": [
+    {
+      "type": "string"
+    },
+    {
+      "type": "null"
+    }
+  ]
+}
+
+### z.string().trim()
+Description: String with trim transform
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string"
+}
+
+### z.string().toLowerCase()
+Description: String with toLowerCase transform
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string"
+}
+
+### z.string().refine(val => val.length > 0)
+Description: String with custom refine
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string"
+}
+
+
+## NUMBER TYPE
+----------------------------------------
+
+### z.number()
+Description: Basic number
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "number"
+}
+
+### z.number().min(0)
+Description: Number with minimum
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "number",
+  "minimum": 0
+}
+
+### z.number().max(100)
+Description: Number with maximum
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "number",
+  "maximum": 100
+}
+
+### z.number().min(0).max(100)
+Description: Number with min and max
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "number",
+  "minimum": 0,
+  "maximum": 100
+}
+
+### z.number().int()
+Description: Integer constraint
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "integer",
+  "minimum": -9007199254740991,
+  "maximum": 9007199254740991
+}
+
+### z.number().positive()
+Description: Positive number
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "number",
+  "exclusiveMinimum": 0
+}
+
+### z.number().negative()
+Description: Negative number
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "number",
+  "exclusiveMaximum": 0
+}
+
+### z.number().nonnegative()
+Description: Non-negative number
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "number",
+  "minimum": 0
+}
+
+### z.number().nonpositive()
+Description: Non-positive number
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "number",
+  "maximum": 0
+}
+
+### z.number().multipleOf(5)
+Description: Multiple of constraint
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "number",
+  "multipleOf": 5
+}
+
+### z.number().finite()
+Description: Finite number
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "number"
+}
+
+### z.number().default(42)
+Description: Number with default value
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "default": 42,
+  "type": "number"
+}
+
+### z.number().optional()
+Description: Optional number
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "number"
+}
+
+### z.int()
+Description: Zod v4 integer type
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "integer",
+  "minimum": -9007199254740991,
+  "maximum": 9007199254740991
+}
+
+### z.int().min(0).max(100)
+Description: Integer with min and max
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "integer",
+  "minimum": 0,
+  "maximum": 100
+}
+
+
+## BOOLEAN TYPE
+----------------------------------------
+
+### z.boolean()
+Description: Basic boolean
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "boolean"
+}
+
+### z.boolean().default(true)
+Description: Boolean with default true
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "default": true,
+  "type": "boolean"
+}
+
+### z.boolean().default(false)
+Description: Boolean with default false
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "default": false,
+  "type": "boolean"
+}
+
+### z.boolean().optional()
+Description: Optional boolean
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "boolean"
+}
+
+
+## DATE TYPE (with date-time override)
+----------------------------------------
+
+### z.date()
+Description: Basic date
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "format": "date-time"
+}
+
+### z.date().min(new Date("2020-01-01"))
+Description: Date with minimum
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "format": "date-time"
+}
+
+### z.date().max(new Date("2030-12-31"))
+Description: Date with maximum
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "format": "date-time"
+}
+
+### z.date().min(new Date("2020-01-01")).max(new Date("2030-12-31"))
+Description: Date with min and max
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "format": "date-time"
+}
+
+### z.date().optional()
+Description: Optional date
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "format": "date-time"
+}
+
+
+## ENUM TYPE
+----------------------------------------
+
+### z.enum(["a", "b", "c"])
+Description: Basic enum
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "a",
+    "b",
+    "c"
+  ]
+}
+
+### z.enum(["admin", "user", "guest"]).default("user")
+Description: Enum with default value
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "default": "user",
+  "type": "string",
+  "enum": [
+    "admin",
+    "user",
+    "guest"
+  ]
+}
+
+### z.enum(["a", "b", "c"]).optional()
+Description: Optional enum
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "a",
+    "b",
+    "c"
+  ]
+}
+
+
+## META/DESCRIBE
+----------------------------------------
+
+### z.string().describe("A description")
+Description: Schema with description
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A description",
+  "type": "string"
+}
+
+### z.string().meta({ label: "My Label" })
+Description: Schema with meta label
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "label": "My Label",
+  "type": "string"
+}
+
+### z.string().meta({ label: "Name", placeholder: "Enter name" })
+Description: Schema with multiple meta properties
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "label": "Name",
+  "placeholder": "Enter name",
+  "type": "string"
+}
+
+### z.number().meta({ label: "Age", minimum: 0 })
+Description: Schema with meta for UI hints
+Serializable: YES
+JSON Schema:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "label": "Age",
+  "minimum": 0,
+  "type": "number"
+}
+
+
+================================================================================
+SUMMARY
+================================================================================
+
+Total tests: 48
+Serializable: 48
+Non-serializable: 0
+
+## SERIALIZABLE PROPERTIES BY TYPE:
+
+### String:
+  - min/max → minLength/maxLength ✓
+  - email() → format: email ✓
+  - url() → format: uri ✓
+  - regex() → pattern ✓
+  - default() → default ✓
+  - optional() → removes from required ✓
+  - trim/toLowerCase → NOT serializable (transforms)
+  - refine() → NOT serializable (custom logic)
+
+### Number:
+  - min/max → minimum/maximum ✓
+  - int() → type: integer ✓
+  - multipleOf() → multipleOf ✓
+  - positive/negative/etc → minimum/maximum ✓
+  - default() → default ✓
+
+### Boolean:
+  - default() → default ✓
+  - No additional validation constraints
+
+### Date (with override):
+  - type: string, format: date-time ✓
+  - min/max → formatMinimum/formatMaximum ✓
+
+### Enum:
+  - enum values → enum array ✓
+  - default() → default ✓
+
+### Meta:
+  - describe() → description ✓
+  - meta({...}) → spreads into JSON Schema ✓
