@@ -6,14 +6,13 @@ import type {
 } from "./types";
 
 /**
- * Convert internal fields to JSON Schema
+ * Helper to convert fields to JSON Schema properties (recursive)
  */
-export function fieldsToJSONSchema(
+function fieldsToProperties(
   fields: FormBuilderField[],
   components: FormBuilderComponentDefinition[]
-): JSONSchema {
+): Record<string, JSONSchemaProperty> {
   const properties: Record<string, JSONSchemaProperty> = {};
-  const required: string[] = [];
 
   for (const field of fields) {
     const component = components.find((c) => c.type === field.type);
@@ -24,12 +23,54 @@ export function fieldsToJSONSchema(
 
     const isRequired = field.props.required ?? false;
     const schemaProp = component.toJSONSchema(field.props, isRequired);
-    properties[field.id] = schemaProp;
 
-    if (isRequired) {
-      required.push(field.id);
+    // Handle nested object fields
+    if (field.type === "object" && field.children && field.children.length > 0) {
+      schemaProp.properties = fieldsToProperties(field.children, components);
+      const childRequired = field.children
+        .filter((child) => child.props.required)
+        .map((child) => child.id);
+      if (childRequired.length > 0) {
+        schemaProp.required = childRequired;
+      }
     }
+
+    // Handle nested array fields
+    if (field.type === "array" && field.itemTemplate && field.itemTemplate.length > 0) {
+      schemaProp.items = {
+        type: "object",
+        properties: fieldsToProperties(field.itemTemplate, components),
+      };
+      const itemRequired = field.itemTemplate
+        .filter((item) => item.props.required)
+        .map((item) => item.id);
+      if (itemRequired.length > 0) {
+        schemaProp.items.required = itemRequired;
+      }
+    }
+
+    properties[field.id] = schemaProp;
   }
+
+  return properties;
+}
+
+/**
+ * Helper to get required field IDs from a list of fields
+ */
+function getRequiredFieldIds(fields: FormBuilderField[]): string[] {
+  return fields.filter((f) => f.props.required).map((f) => f.id);
+}
+
+/**
+ * Convert internal fields to JSON Schema
+ */
+export function fieldsToJSONSchema(
+  fields: FormBuilderField[],
+  components: FormBuilderComponentDefinition[]
+): JSONSchema {
+  const properties = fieldsToProperties(fields, components);
+  const required = getRequiredFieldIds(fields);
 
   return {
     type: "object",
@@ -39,20 +80,16 @@ export function fieldsToJSONSchema(
 }
 
 /**
- * Convert JSON Schema to internal fields
+ * Helper to parse JSON Schema properties into fields (recursive)
  */
-export function jsonSchemaToFields(
-  schema: JSONSchema | null | undefined,
+function propertiesToFields(
+  properties: Record<string, JSONSchemaProperty>,
+  requiredSet: Set<string>,
   components: FormBuilderComponentDefinition[]
 ): FormBuilderField[] {
-  if (!schema || !schema.properties) {
-    return [];
-  }
-
   const fields: FormBuilderField[] = [];
-  const requiredSet = new Set(schema.required || []);
 
-  for (const [key, prop] of Object.entries(schema.properties)) {
+  for (const [key, prop] of Object.entries(properties)) {
     const isRequired = requiredSet.has(key);
     let field: FormBuilderField | null = null;
 
@@ -66,6 +103,18 @@ export function jsonSchemaToFields(
     }
 
     if (field) {
+      // Handle nested object fields
+      if (field.type === "object" && prop.properties) {
+        const childRequiredSet = new Set(prop.required || []);
+        field.children = propertiesToFields(prop.properties, childRequiredSet, components);
+      }
+
+      // Handle nested array fields
+      if (field.type === "array" && prop.items?.properties) {
+        const itemRequiredSet = new Set(prop.items.required || []);
+        field.itemTemplate = propertiesToFields(prop.items.properties, itemRequiredSet, components);
+      }
+
       fields.push(field);
     } else {
       // Fallback: create a generic text field for unknown types
@@ -84,6 +133,21 @@ export function jsonSchemaToFields(
   }
 
   return fields;
+}
+
+/**
+ * Convert JSON Schema to internal fields
+ */
+export function jsonSchemaToFields(
+  schema: JSONSchema | null | undefined,
+  components: FormBuilderComponentDefinition[]
+): FormBuilderField[] {
+  if (!schema || !schema.properties) {
+    return [];
+  }
+
+  const requiredSet = new Set(schema.required || []);
+  return propertiesToFields(schema.properties, requiredSet, components);
 }
 
 /**

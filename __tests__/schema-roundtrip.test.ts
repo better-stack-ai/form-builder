@@ -7,6 +7,9 @@
 
 import { describe, it, expect } from "vitest";
 import { z } from "zod";
+import { fieldsToJSONSchema, jsonSchemaToFields } from "../components/ui/form-builder/schema-utils";
+import { defaultComponents } from "../components/ui/form-builder/components";
+import type { FormBuilderField } from "../components/ui/form-builder/types";
 
 // Type for JSON Schema property used in tests
 type JSONSchemaProperty = {
@@ -444,5 +447,256 @@ describe("Roundtrip: Zod -> JSON Schema -> Zod", () => {
       acceptTerms: true,
     });
     expect(invalidEmail.success).toBe(false);
+  });
+});
+
+// ============================================================================
+// Form Builder Nested Fields Tests
+// ============================================================================
+
+describe("Form Builder: Nested Object Fields", () => {
+  it("should serialize object field with children to JSON Schema", () => {
+    const fields: FormBuilderField[] = [
+      {
+        id: "address",
+        type: "object",
+        props: { label: "Address", required: true },
+        children: [
+          {
+            id: "street",
+            type: "text",
+            props: { label: "Street", required: true },
+          },
+          {
+            id: "city",
+            type: "text",
+            props: { label: "City", required: true },
+          },
+          {
+            id: "zipCode",
+            type: "text",
+            props: { label: "Zip Code" },
+          },
+        ],
+      },
+    ];
+
+    const schema = fieldsToJSONSchema(fields, defaultComponents);
+
+    expect(schema.type).toBe("object");
+    expect(schema.properties?.address).toBeDefined();
+    expect(schema.properties?.address.type).toBe("object");
+    expect(schema.properties?.address.properties?.street).toBeDefined();
+    expect(schema.properties?.address.properties?.city).toBeDefined();
+    expect(schema.properties?.address.properties?.zipCode).toBeDefined();
+    expect(schema.properties?.address.required).toContain("street");
+    expect(schema.properties?.address.required).toContain("city");
+    expect(schema.properties?.address.required).not.toContain("zipCode");
+    expect(schema.required).toContain("address");
+  });
+
+  it("should deserialize JSON Schema with nested object to fields", () => {
+    const jsonSchema = {
+      type: "object" as const,
+      properties: {
+        address: {
+          type: "object",
+          label: "Address",
+          properties: {
+            street: { type: "string", label: "Street" },
+            city: { type: "string", label: "City" },
+          },
+          required: ["street"],
+        },
+      },
+      required: ["address"],
+    };
+
+    const fields = jsonSchemaToFields(jsonSchema, defaultComponents);
+
+    expect(fields).toHaveLength(1);
+    expect(fields[0].type).toBe("object");
+    expect(fields[0].id).toBe("address");
+    expect(fields[0].children).toHaveLength(2);
+    expect(fields[0].children?.[0].id).toBe("street");
+    expect(fields[0].children?.[0].props.required).toBe(true);
+    expect(fields[0].children?.[1].id).toBe("city");
+    expect(fields[0].children?.[1].props.required).toBe(false);
+  });
+
+  it("should roundtrip nested object fields", () => {
+    const originalFields: FormBuilderField[] = [
+      {
+        id: "contact",
+        type: "object",
+        props: { label: "Contact Info" },
+        children: [
+          { id: "email", type: "email", props: { label: "Email", required: true } },
+          { id: "phone", type: "phone", props: { label: "Phone" } },
+        ],
+      },
+    ];
+
+    const schema = fieldsToJSONSchema(originalFields, defaultComponents);
+    const roundtripFields = jsonSchemaToFields(schema, defaultComponents);
+
+    expect(roundtripFields).toHaveLength(1);
+    expect(roundtripFields[0].type).toBe("object");
+    expect(roundtripFields[0].children).toHaveLength(2);
+    expect(roundtripFields[0].children?.[0].type).toBe("email");
+    expect(roundtripFields[0].children?.[1].type).toBe("phone");
+  });
+});
+
+describe("Form Builder: Nested Array Fields", () => {
+  it("should serialize array field with itemTemplate to JSON Schema", () => {
+    const fields: FormBuilderField[] = [
+      {
+        id: "workExperience",
+        type: "array",
+        props: { label: "Work Experience", minItems: 1, maxItems: 5 },
+        itemTemplate: [
+          { id: "company", type: "text", props: { label: "Company", required: true } },
+          { id: "position", type: "text", props: { label: "Position", required: true } },
+          { id: "startDate", type: "date", props: { label: "Start Date" } },
+        ],
+      },
+    ];
+
+    const schema = fieldsToJSONSchema(fields, defaultComponents);
+
+    expect(schema.type).toBe("object");
+    expect(schema.properties?.workExperience).toBeDefined();
+    expect(schema.properties?.workExperience.type).toBe("array");
+    expect(schema.properties?.workExperience.minItems).toBe(1);
+    expect(schema.properties?.workExperience.maxItems).toBe(5);
+    expect(schema.properties?.workExperience.items?.type).toBe("object");
+    expect(schema.properties?.workExperience.items?.properties?.company).toBeDefined();
+    expect(schema.properties?.workExperience.items?.properties?.position).toBeDefined();
+    expect(schema.properties?.workExperience.items?.properties?.startDate).toBeDefined();
+    expect(schema.properties?.workExperience.items?.required).toContain("company");
+    expect(schema.properties?.workExperience.items?.required).toContain("position");
+  });
+
+  it("should deserialize JSON Schema with array to fields", () => {
+    const jsonSchema = {
+      type: "object" as const,
+      properties: {
+        items: {
+          type: "array",
+          label: "Items",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string", label: "Name" },
+              quantity: { type: "number", label: "Quantity" },
+            },
+            required: ["name"],
+          },
+        },
+      },
+    };
+
+    const fields = jsonSchemaToFields(jsonSchema, defaultComponents);
+
+    expect(fields).toHaveLength(1);
+    expect(fields[0].type).toBe("array");
+    expect(fields[0].id).toBe("items");
+    expect(fields[0].itemTemplate).toHaveLength(2);
+    expect(fields[0].itemTemplate?.[0].id).toBe("name");
+    expect(fields[0].itemTemplate?.[0].props.required).toBe(true);
+    expect(fields[0].itemTemplate?.[1].id).toBe("quantity");
+    expect(fields[0].itemTemplate?.[1].type).toBe("number");
+  });
+
+  it("should roundtrip nested array fields", () => {
+    const originalFields: FormBuilderField[] = [
+      {
+        id: "skills",
+        type: "array",
+        props: { label: "Skills" },
+        itemTemplate: [
+          { id: "name", type: "text", props: { label: "Skill Name", required: true } },
+          { id: "level", type: "select", props: { label: "Level", options: ["Beginner", "Intermediate", "Expert"] } },
+        ],
+      },
+    ];
+
+    const schema = fieldsToJSONSchema(originalFields, defaultComponents);
+    const roundtripFields = jsonSchemaToFields(schema, defaultComponents);
+
+    expect(roundtripFields).toHaveLength(1);
+    expect(roundtripFields[0].type).toBe("array");
+    expect(roundtripFields[0].itemTemplate).toHaveLength(2);
+    expect(roundtripFields[0].itemTemplate?.[0].type).toBe("text");
+    expect(roundtripFields[0].itemTemplate?.[1].type).toBe("select");
+  });
+});
+
+describe("Form Builder: Deeply Nested Structures", () => {
+  it("should handle object containing array containing object", () => {
+    const fields: FormBuilderField[] = [
+      {
+        id: "profile",
+        type: "object",
+        props: { label: "Profile" },
+        children: [
+          { id: "name", type: "text", props: { label: "Name", required: true } },
+          {
+            id: "addresses",
+            type: "array",
+            props: { label: "Addresses" },
+            itemTemplate: [
+              { id: "street", type: "text", props: { label: "Street" } },
+              { id: "city", type: "text", props: { label: "City" } },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const schema = fieldsToJSONSchema(fields, defaultComponents);
+    
+    // Verify deeply nested structure
+    expect(schema.properties?.profile.type).toBe("object");
+    expect(schema.properties?.profile.properties?.name).toBeDefined();
+    expect(schema.properties?.profile.properties?.addresses?.type).toBe("array");
+    expect(schema.properties?.profile.properties?.addresses?.items?.properties?.street).toBeDefined();
+    expect(schema.properties?.profile.properties?.addresses?.items?.properties?.city).toBeDefined();
+
+    // Roundtrip
+    const roundtripFields = jsonSchemaToFields(schema, defaultComponents);
+    expect(roundtripFields[0].type).toBe("object");
+    expect(roundtripFields[0].children).toHaveLength(2);
+    const addressesField = roundtripFields[0].children?.find(f => f.id === "addresses");
+    expect(addressesField?.type).toBe("array");
+    expect(addressesField?.itemTemplate).toHaveLength(2);
+  });
+
+  it("should handle empty children/itemTemplate gracefully", () => {
+    const fields: FormBuilderField[] = [
+      {
+        id: "emptyGroup",
+        type: "object",
+        props: { label: "Empty Group" },
+        children: [],
+      },
+      {
+        id: "emptyArray",
+        type: "array",
+        props: { label: "Empty Array" },
+        itemTemplate: [],
+      },
+    ];
+
+    const schema = fieldsToJSONSchema(fields, defaultComponents);
+    
+    expect(schema.properties?.emptyGroup.type).toBe("object");
+    expect(schema.properties?.emptyGroup.properties).toEqual({});
+    expect(schema.properties?.emptyArray.type).toBe("array");
+    expect(schema.properties?.emptyArray.items?.properties).toEqual({});
+
+    const roundtripFields = jsonSchemaToFields(schema, defaultComponents);
+    expect(roundtripFields).toHaveLength(2);
   });
 });

@@ -2,7 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Pencil, Trash2 } from "lucide-react";
+import { GripVertical, Pencil, Trash2, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { FormBuilderField, FormBuilderComponentDefinition, FieldDragData } from "./types";
@@ -13,6 +13,8 @@ interface SortableFieldProps {
   component: FormBuilderComponentDefinition | undefined;
   onEdit: () => void;
   onDelete: () => void;
+  /** Callback to configure nested fields for object/array types */
+  onConfigureNested?: () => void;
 }
 
 export function SortableField({
@@ -21,6 +23,7 @@ export function SortableField({
   component,
   onEdit,
   onDelete,
+  onConfigureNested,
 }: SortableFieldProps) {
   const {
     attributes,
@@ -44,6 +47,12 @@ export function SortableField({
   };
 
   const Icon = component?.icon as React.ComponentType<{ className?: string }> | undefined;
+  
+  // Check if this is a container field (object or array)
+  const isContainerField = field.type === "object" || field.type === "array";
+  const nestedFieldCount = field.type === "object" 
+    ? (field.children?.length || 0)
+    : (field.itemTemplate?.length || 0);
 
   return (
     <div
@@ -78,6 +87,11 @@ export function SortableField({
           {field.props.required && (
             <span className="text-destructive text-sm">*</span>
           )}
+          {isContainerField && (
+            <span className="text-xs bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+              {nestedFieldCount} {nestedFieldCount === 1 ? "field" : "fields"}
+            </span>
+          )}
         </div>
         {field.props.description && (
           <p className="text-sm text-muted-foreground truncate mt-0.5">
@@ -91,6 +105,25 @@ export function SortableField({
 
       {/* Action Buttons */}
       <div className="flex items-center gap-1">
+        {/* Configure Nested Fields button for container types */}
+        {isContainerField && onConfigureNested && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "h-8 w-8 text-muted-foreground hover:text-primary",
+              "opacity-0 group-hover:opacity-100 transition-opacity",
+              "min-w-[44px] min-h-[44px]"
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              onConfigureNested();
+            }}
+            title="Configure nested fields"
+          >
+            <Settings2 className="h-4 w-4" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"

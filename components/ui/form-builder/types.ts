@@ -37,11 +37,19 @@ export interface JSONSchema {
  * JSON Schema property with form-builder metadata.
  * Extends the shared JSONSchemaPropertyBase for compatibility with auto-form.
  */
-export interface JSONSchemaProperty extends Omit<JSONSchemaPropertyBase, "type" | "enum"> {
+export interface JSONSchemaProperty extends Omit<JSONSchemaPropertyBase, "type" | "enum" | "properties" | "items"> {
   /** JSON Schema type - required for form-builder fields */
   type: string;
   /** Enum values for select/radio fields (string-only for form-builder) */
   enum?: string[];
+  /** Nested properties for object types (self-referential) */
+  properties?: Record<string, JSONSchemaProperty>;
+  /** Item schema for array types (self-referential) */
+  items?: JSONSchemaProperty;
+  /** Minimum items for array types */
+  minItems?: number;
+  /** Maximum items for array types */
+  maxItems?: number;
 }
 
 /**
@@ -51,6 +59,10 @@ export interface FormBuilderField {
   id: string;
   type: string;
   props: FormBuilderFieldProps;
+  /** Nested fields for object type containers */
+  children?: FormBuilderField[];
+  /** Template fields defining the shape of each array item */
+  itemTemplate?: FormBuilderField[];
 }
 
 /**
@@ -231,6 +243,10 @@ export interface FormBuilderFieldProps extends BaseFieldProps {
   
   // Enum field props
   options?: string[];
+  
+  // Array field props
+  minItems?: number;
+  maxItems?: number;
   
   // Default value (type depends on backing type)
   defaultValue?: unknown;

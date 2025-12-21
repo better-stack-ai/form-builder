@@ -131,6 +131,31 @@ export const enumOptionsSchema = z.object({
   }),
 });
 
+/**
+ * Object validation schema
+ * Object fields don't have their own validation - validation comes from children
+ */
+export const objectValidationSchema = z.object({});
+
+/**
+ * Array validation schema
+ * Serializes to: minItems, maxItems
+ */
+export const arrayValidationSchema = z.object({
+  minItems: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .meta({ label: "Min Items" }),
+  maxItems: z
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .meta({ label: "Max Items" }),
+});
+
 // ============================================================================
 // VALIDATION SCHEMAS REGISTRY
 // ============================================================================
@@ -145,6 +170,8 @@ export const VALIDATION_SCHEMAS = {
   boolean: booleanValidationSchema,
   date: dateValidationSchema,
   enum: enumOptionsSchema,
+  object: objectValidationSchema,
+  array: arrayValidationSchema,
 } as const;
 
 // ============================================================================

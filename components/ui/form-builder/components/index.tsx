@@ -12,11 +12,15 @@ import {
   Phone,
   Calendar,
   Palette,
+  FolderOpen,
+  List,
 } from "lucide-react";
 import { z } from "zod";
 import {
   defineComponent,
   type FormBuilderComponentDefinition,
+  type FormBuilderFieldProps,
+  type FormBuilderField,
   type StringFieldProps,
   type NumberFieldProps,
   type BooleanFieldProps,
@@ -32,6 +36,8 @@ import {
   booleanValidationSchema,
   dateValidationSchema,
   enumOptionsSchema,
+  objectValidationSchema,
+  arrayValidationSchema,
   DEFAULT_VALUE_SCHEMAS,
 } from "../validation-schemas";
 
@@ -648,6 +654,95 @@ export const colorFieldDefinition = defineComponent<"string">({
 });
 
 /**
+ * Object Field (Field Group)
+ * 
+ * A container field that groups other fields together as nested properties.
+ * The actual children are stored in field.children and converted by schema-utils.
+ */
+export const objectFieldDefinition: FormBuilderComponentDefinition = {
+  type: "object",
+  label: "Field Group",
+  icon: FolderOpen,
+  defaultProps: {
+    label: "Field Group",
+    required: false,
+  },
+  propertiesSchema: baseMetaSchema.extend(objectValidationSchema.shape),
+  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+    type: "object",
+    label: props.label,
+    description: props.description,
+    // properties will be filled in by schema-utils from field.children
+    properties: {},
+  }),
+  fromJSONSchema: (prop, key, isRequired): FormBuilderField | null => {
+    // Match object type with properties (not primitive objects without properties)
+    if (prop.type !== "object" || !prop.properties) {
+      return null;
+    }
+    return {
+      id: key,
+      type: "object",
+      props: {
+        label: getLabel(prop, key),
+        description: prop.description,
+        required: isRequired,
+      },
+      // children will be filled in by schema-utils
+      children: [],
+    };
+  },
+};
+
+/**
+ * Array Field (Repeating Group)
+ * 
+ * A container field for repeating items. Each item follows a template defined
+ * in field.itemTemplate. The template is converted by schema-utils.
+ */
+export const arrayFieldDefinition: FormBuilderComponentDefinition = {
+  type: "array",
+  label: "Repeating Group",
+  icon: List,
+  defaultProps: {
+    label: "Items",
+    required: false,
+  },
+  propertiesSchema: baseMetaSchema.extend(arrayValidationSchema.shape),
+  toJSONSchema: (props: FormBuilderFieldProps): JSONSchemaProperty => ({
+    type: "array",
+    label: props.label,
+    description: props.description,
+    minItems: props.minItems,
+    maxItems: props.maxItems,
+    // items will be filled in by schema-utils from field.itemTemplate
+    items: {
+      type: "object",
+      properties: {},
+    },
+  }),
+  fromJSONSchema: (prop, key, isRequired): FormBuilderField | null => {
+    // Match array type with object items
+    if (prop.type !== "array" || !prop.items) {
+      return null;
+    }
+    return {
+      id: key,
+      type: "array",
+      props: {
+        label: getLabel(prop, key),
+        description: prop.description,
+        required: isRequired,
+        minItems: prop.minItems,
+        maxItems: prop.maxItems,
+      },
+      // itemTemplate will be filled in by schema-utils
+      itemTemplate: [],
+    };
+  },
+};
+
+/**
  * All default components in order of specificity (more specific first)
  * This order matters for fromJSONSchema matching
  * 
@@ -655,6 +750,9 @@ export const colorFieldDefinition = defineComponent<"string">({
  * component that can be added via the `components` prop.
  */
 export const defaultComponents: FormBuilderComponentDefinition[] = [
+  // Container types (must be before primitives to match object/array JSON Schema)
+  objectFieldDefinition,
+  arrayFieldDefinition,
   // Specific types first
   emailFieldDefinition,
   passwordFieldDefinition,

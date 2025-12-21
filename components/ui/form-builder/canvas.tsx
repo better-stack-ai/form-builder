@@ -41,6 +41,8 @@ interface CanvasProps {
   components: FormBuilderComponentDefinition[];
   onEditField: (id: string) => void;
   onDeleteField: (id: string) => void;
+  /** Callback to configure nested fields for object/array types */
+  onConfigureNested?: (id: string) => void;
   isDraggingFromPalette: boolean;
   className?: string;
 }
@@ -50,6 +52,7 @@ export function Canvas({
   components,
   onEditField,
   onDeleteField,
+  onConfigureNested,
   isDraggingFromPalette,
   className,
 }: CanvasProps) {
@@ -95,6 +98,7 @@ export function Canvas({
                   component={getComponent(field.type)}
                   onEdit={() => onEditField(field.id)}
                   onDelete={() => onDeleteField(field.id)}
+                  onConfigureNested={onConfigureNested ? () => onConfigureNested(field.id) : undefined}
                 />
                 {/* Drop zone after each field */}
                 <DropZone id={`drop-zone-${field.id}`} isDraggingFromPalette={isDraggingFromPalette} />

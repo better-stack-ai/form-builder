@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Palette, PaletteDragOverlay } from "./palette";
 import { Canvas } from "./canvas";
 import { EditFieldDialog } from "./edit-field-dialog";
+import { NestedFieldEditorDialog } from "./nested-field-editor-dialog";
 import { FormPreview } from "./form-preview";
 import { FieldDragOverlay } from "./sortable-field";
 import { defaultComponents, getComponentByType } from "./components";
@@ -39,7 +40,7 @@ import type {
 import type { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
 
 // Re-export types and components for external use
-export { defaultComponents, colorFieldDefinition } from "./components";
+export { defaultComponents, colorFieldDefinition, objectFieldDefinition, arrayFieldDefinition } from "./components";
 export type {
   FormBuilderComponentDefinition,
   FormBuilderField,
@@ -106,6 +107,7 @@ export function FormBuilder({
     value ? jsonSchemaToFields(value, components) : []
   );
   const [editDialogFieldId, setEditDialogFieldId] = useState<string | null>(null);
+  const [nestedEditorFieldId, setNestedEditorFieldId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
 
   // Notify onChange when fields change
@@ -274,11 +276,38 @@ export function FormBuilder({
     [fields, notifyChange]
   );
 
+  // Open nested field editor for object/array fields
+  const handleConfigureNested = useCallback((id: string) => {
+    setNestedEditorFieldId(id);
+  }, []);
+
+  // Save nested fields (children for object, itemTemplate for array)
+  const handleSaveNestedFields = useCallback(
+    (fieldId: string, nestedFields: FormBuilderField[]) => {
+      const newFields = fields.map((f) => {
+        if (f.id !== fieldId) return f;
+        
+        if (f.type === "object") {
+          return { ...f, children: nestedFields };
+        } else if (f.type === "array") {
+          return { ...f, itemTemplate: nestedFields };
+        }
+        return f;
+      });
+      setFields(newFields);
+      notifyChange(newFields);
+    },
+    [fields, notifyChange]
+  );
+
   // Get edit dialog field and its component
   const editDialogField = fields.find((f) => f.id === editDialogFieldId) || null;
   const editDialogComponent = editDialogField
     ? getComponentByType(editDialogField.type, components) || null
     : null;
+
+  // Get nested editor field
+  const nestedEditorField = fields.find((f) => f.id === nestedEditorFieldId) || null;
 
   return (
     <div className={cn("flex flex-col lg:h-full", className)}>
@@ -303,6 +332,7 @@ export function FormBuilder({
               components={components}
               onEditField={handleEditField}
               onDeleteField={handleDeleteField}
+              onConfigureNested={handleConfigureNested}
               isDraggingFromPalette={activeDragData?.type === "palette"}
             />
           </div>
@@ -355,6 +385,15 @@ export function FormBuilder({
         field={editDialogField}
         component={editDialogComponent}
         onUpdate={handleUpdateField}
+      />
+
+      {/* Nested Field Editor Dialog */}
+      <NestedFieldEditorDialog
+        open={nestedEditorFieldId !== null}
+        onOpenChange={(open) => !open && setNestedEditorFieldId(null)}
+        field={nestedEditorField}
+        components={components}
+        onSave={handleSaveNestedFields}
       />
     </div>
   );
