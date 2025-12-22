@@ -102,10 +102,6 @@
         {
           "path": "components/ui/shared-form-types.ts",
           "type": "registry:component"
-        },
-        {
-          "path": "lib/utils.ts",
-          "type": "registry:lib"
         }
       ]
     },

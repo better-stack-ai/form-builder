@@ -119,11 +119,13 @@ function buildAutoFormItem(): RegistryItem {
     (f) => !f.endsWith("stepped-auto-form.tsx")
   );
 
-  // Add shared dependencies
+  // Add shared component files
+  // Note: We don't include lib/utils.ts because it's a standard shadcn utility
+  // that users already have from installing any shadcn component.
+  // Including it would cause shadcn to rewrite imports in existing components.
   const sharedFiles = [
     "components/ui/form.tsx",
     "components/ui/shared-form-types.ts",
-    "lib/utils.ts",
   ];
 
   const allFiles = [...filteredFiles, ...sharedFiles];
