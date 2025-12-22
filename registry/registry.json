@@ -28,79 +28,79 @@
       ],
       "files": [
         {
-          "path": "components/ui/auto-form/common/label.tsx",
+          "path": "components/auto-form/common/label.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/common/tooltip.tsx",
+          "path": "components/auto-form/common/tooltip.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/config.ts",
+          "path": "components/auto-form/config.ts",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/dependencies.ts",
+          "path": "components/auto-form/dependencies.ts",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/fields/array.tsx",
+          "path": "components/auto-form/fields/array.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/fields/checkbox.tsx",
+          "path": "components/auto-form/fields/checkbox.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/fields/date.tsx",
+          "path": "components/auto-form/fields/date.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/fields/enum.tsx",
+          "path": "components/auto-form/fields/enum.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/fields/input.tsx",
+          "path": "components/auto-form/fields/input.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/fields/number.tsx",
+          "path": "components/auto-form/fields/number.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/fields/object.tsx",
+          "path": "components/auto-form/fields/object.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/fields/radio-group.tsx",
+          "path": "components/auto-form/fields/radio-group.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/fields/switch.tsx",
+          "path": "components/auto-form/fields/switch.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/fields/textarea.tsx",
+          "path": "components/auto-form/fields/textarea.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/index.tsx",
+          "path": "components/auto-form/index.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/types.ts",
+          "path": "components/auto-form/types.ts",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/auto-form/utils.tsx",
+          "path": "components/auto-form/utils.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/form.tsx",
+          "path": "components/form.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/shared-form-types.ts",
+          "path": "components/shared-form-types.ts",
           "type": "registry:component"
         }
       ]
@@ -118,7 +118,7 @@
       "dependencies": [],
       "files": [
         {
-          "path": "components/ui/auto-form/stepped-auto-form.tsx",
+          "path": "components/auto-form/stepped-auto-form.tsx",
           "type": "registry:component"
         }
       ]
@@ -143,55 +143,55 @@
       ],
       "files": [
         {
-          "path": "components/ui/form-builder/canvas.tsx",
+          "path": "components/form-builder/canvas.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/form-builder/components/index.tsx",
+          "path": "components/form-builder/components/index.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/form-builder/edit-field-dialog.tsx",
+          "path": "components/form-builder/edit-field-dialog.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/form-builder/form-preview.tsx",
+          "path": "components/form-builder/form-preview.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/form-builder/index.tsx",
+          "path": "components/form-builder/index.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/form-builder/nested-field-editor-dialog.tsx",
+          "path": "components/form-builder/nested-field-editor-dialog.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/form-builder/palette.tsx",
+          "path": "components/form-builder/palette.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/form-builder/property-panel.tsx",
+          "path": "components/form-builder/property-panel.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/form-builder/schema-utils.ts",
+          "path": "components/form-builder/schema-utils.ts",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/form-builder/sortable-field.tsx",
+          "path": "components/form-builder/sortable-field.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/form-builder/step-tabs.tsx",
+          "path": "components/form-builder/step-tabs.tsx",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/form-builder/types.ts",
+          "path": "components/form-builder/types.ts",
           "type": "registry:component"
         },
         {
-          "path": "components/ui/form-builder/validation-schemas.ts",
+          "path": "components/form-builder/validation-schemas.ts",
           "type": "registry:component"
         }
       ]

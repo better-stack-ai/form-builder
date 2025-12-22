@@ -50,6 +50,16 @@ interface Registry {
 
 const ROOT_DIR = path.resolve(__dirname, "../..");
 const REGISTRY_OUTPUT_DIR = path.join(ROOT_DIR, "registry");
+const REGISTRY_SRC_DIR = path.join(ROOT_DIR, ".registry-src");
+
+// Path mappings: source path -> registry path
+// This removes the /ui/ segment so files are installed directly under components/
+const PATH_MAPPINGS: Array<{ from: string; to: string }> = [
+  { from: "components/ui/auto-form", to: "components/auto-form" },
+  { from: "components/ui/form-builder", to: "components/form-builder" },
+  { from: "components/ui/form.tsx", to: "components/form.tsx" },
+  { from: "components/ui/shared-form-types.ts", to: "components/shared-form-types.ts" },
+];
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -58,17 +68,21 @@ const REGISTRY_OUTPUT_DIR = path.join(ROOT_DIR, "registry");
 /**
  * Get all files in a directory recursively
  */
-function getFilesRecursively(dir: string, baseDir: string = dir): string[] {
+function getFilesRecursively(dir: string): string[] {
   const files: string[] = [];
+  
+  if (!fs.existsSync(dir)) {
+    return files;
+  }
+  
   const entries = fs.readdirSync(dir, { withFileTypes: true });
 
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      files.push(...getFilesRecursively(fullPath, baseDir));
+      files.push(...getFilesRecursively(fullPath));
     } else if (entry.isFile()) {
-      // Return path relative to ROOT_DIR
-      files.push(path.relative(ROOT_DIR, fullPath));
+      files.push(fullPath);
     }
   }
 
@@ -76,11 +90,36 @@ function getFilesRecursively(dir: string, baseDir: string = dir): string[] {
 }
 
 /**
+ * Transform a source path to its registry path
+ */
+function transformPath(sourcePath: string): string {
+  for (const mapping of PATH_MAPPINGS) {
+    if (sourcePath.startsWith(mapping.from)) {
+      return sourcePath.replace(mapping.from, mapping.to);
+    }
+  }
+  return sourcePath;
+}
+
+/**
+ * Copy a file to the registry source directory with transformed path
+ */
+function copyToRegistrySrc(sourcePath: string): string {
+  const fullSourcePath = path.join(ROOT_DIR, sourcePath);
+  const registryPath = transformPath(sourcePath);
+  const fullDestPath = path.join(REGISTRY_SRC_DIR, registryPath);
+  
+  // Ensure directory exists
+  fs.mkdirSync(path.dirname(fullDestPath), { recursive: true });
+  
+  // Copy file
+  fs.copyFileSync(fullSourcePath, fullDestPath);
+  
+  return registryPath;
+}
+
+/**
  * Determine the registry file type based on file path
- * 
- * Note: Files in components/ should use "registry:component" to preserve
- * their directory structure during installation. Only files actually in
- * lib/ should use "registry:lib".
  */
 function getFileType(filePath: string): RegistryFile["type"] {
   // Files in lib/ folder should be placed in lib/
@@ -89,17 +128,16 @@ function getFileType(filePath: string): RegistryFile["type"] {
   }
 
   // All files in components/ should stay in components/
-  // Using "registry:component" preserves the path structure
   return "registry:component";
 }
 
 /**
- * Create a RegistryFile from a file path
+ * Create a RegistryFile from a registry path
  */
-function createRegistryFile(filePath: string): RegistryFile {
+function createRegistryFile(registryPath: string): RegistryFile {
   return {
-    path: filePath,
-    type: getFileType(filePath),
+    path: registryPath,
+    type: getFileType(registryPath),
   };
 }
 
@@ -112,7 +150,8 @@ function createRegistryFile(filePath: string): RegistryFile {
  */
 function buildAutoFormItem(): RegistryItem {
   const autoFormDir = path.join(ROOT_DIR, "components/ui/auto-form");
-  const autoFormFiles = getFilesRecursively(autoFormDir);
+  const autoFormFiles = getFilesRecursively(autoFormDir)
+    .map((f) => path.relative(ROOT_DIR, f));
 
   // Filter out stepped-auto-form.tsx as it's a separate item
   const filteredFiles = autoFormFiles.filter(
@@ -122,13 +161,15 @@ function buildAutoFormItem(): RegistryItem {
   // Add shared component files
   // Note: We don't include lib/utils.ts because it's a standard shadcn utility
   // that users already have from installing any shadcn component.
-  // Including it would cause shadcn to rewrite imports in existing components.
   const sharedFiles = [
     "components/ui/form.tsx",
     "components/ui/shared-form-types.ts",
   ];
 
-  const allFiles = [...filteredFiles, ...sharedFiles];
+  const allSourceFiles = [...filteredFiles, ...sharedFiles];
+  
+  // Copy files to registry source and get transformed paths
+  const registryPaths = allSourceFiles.map(copyToRegistrySrc);
 
   return {
     name: "auto-form",
@@ -150,7 +191,7 @@ function buildAutoFormItem(): RegistryItem {
       "popover",
     ],
     dependencies: ["zod", "react-hook-form", "@hookform/resolvers"],
-    files: allFiles.map(createRegistryFile),
+    files: registryPaths.map(createRegistryFile),
   };
 }
 
@@ -158,6 +199,9 @@ function buildAutoFormItem(): RegistryItem {
  * Build the stepped-auto-form registry item
  */
 function buildSteppedAutoFormItem(): RegistryItem {
+  const sourceFile = "components/ui/auto-form/stepped-auto-form.tsx";
+  const registryPath = copyToRegistrySrc(sourceFile);
+  
   return {
     name: "stepped-auto-form",
     type: "registry:block",
@@ -166,9 +210,7 @@ function buildSteppedAutoFormItem(): RegistryItem {
       "Multi-step form wizard built on auto-form with step navigation and validation.",
     registryDependencies: ["auto-form", "button", "separator"],
     dependencies: [],
-    files: [
-      createRegistryFile("components/ui/auto-form/stepped-auto-form.tsx"),
-    ],
+    files: [createRegistryFile(registryPath)],
   };
 }
 
@@ -177,7 +219,11 @@ function buildSteppedAutoFormItem(): RegistryItem {
  */
 function buildFormBuilderItem(): RegistryItem {
   const formBuilderDir = path.join(ROOT_DIR, "components/ui/form-builder");
-  const formBuilderFiles = getFilesRecursively(formBuilderDir);
+  const formBuilderFiles = getFilesRecursively(formBuilderDir)
+    .map((f) => path.relative(ROOT_DIR, f));
+
+  // Copy files to registry source and get transformed paths
+  const registryPaths = formBuilderFiles.map(copyToRegistrySrc);
 
   return {
     name: "form-builder",
@@ -198,7 +244,7 @@ function buildFormBuilderItem(): RegistryItem {
       "@dnd-kit/modifiers",
       "@dnd-kit/utilities",
     ],
-    files: formBuilderFiles.map(createRegistryFile),
+    files: registryPaths.map(createRegistryFile),
   };
 }
 
@@ -209,7 +255,13 @@ function buildFormBuilderItem(): RegistryItem {
 function main() {
   console.log("🔨 Building shadcn registry...\n");
 
-  // Build registry items
+  // Clean up previous registry source
+  if (fs.existsSync(REGISTRY_SRC_DIR)) {
+    fs.rmSync(REGISTRY_SRC_DIR, { recursive: true });
+  }
+  fs.mkdirSync(REGISTRY_SRC_DIR, { recursive: true });
+
+  // Build registry items (this also copies files to registry source)
   const autoFormItem = buildAutoFormItem();
   const steppedAutoFormItem = buildSteppedAutoFormItem();
   const formBuilderItem = buildFormBuilderItem();
@@ -222,8 +274,8 @@ function main() {
     items: [autoFormItem, steppedAutoFormItem, formBuilderItem],
   };
 
-  // Write registry.json
-  const registryPath = path.join(ROOT_DIR, "registry.json");
+  // Write registry.json to the registry source directory
+  const registryPath = path.join(REGISTRY_SRC_DIR, "registry.json");
   fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2));
   console.log(`✅ Generated registry.json with ${registry.items.length} items`);
 
@@ -237,20 +289,27 @@ function main() {
     fs.mkdirSync(REGISTRY_OUTPUT_DIR, { recursive: true });
   }
 
-  // Run shadcn build
+  // Run shadcn build from the registry source directory
   console.log("\n🏗️  Running shadcn build...\n");
   try {
     execSync(`pnpm dlx shadcn@latest build -o ${REGISTRY_OUTPUT_DIR}`, {
-      cwd: ROOT_DIR,
+      cwd: REGISTRY_SRC_DIR,
       stdio: "inherit",
     });
+    
+    // Also copy registry.json to output for reference
+    fs.copyFileSync(registryPath, path.join(REGISTRY_OUTPUT_DIR, "registry.json"));
+    
+    // Clean up registry source
+    fs.rmSync(REGISTRY_SRC_DIR, { recursive: true });
+    
     console.log("\n✅ Registry built successfully!");
     console.log(`   Output: ${REGISTRY_OUTPUT_DIR}/`);
     console.log("\n📡 To serve the registry locally:");
     console.log("   pnpm host-registry");
     console.log("\n🔗 To install components:");
     console.log(
-      "   npx shadcn@latest add http://localhost:8080/auto-form.json"
+      "   pnpm dlx shadcn@latest add http://localhost:8080/auto-form.json"
     );
   } catch (error) {
     console.error("\n❌ Failed to build registry:", error);
