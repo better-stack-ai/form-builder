@@ -11,7 +11,6 @@ import {
   Globe,
   Phone,
   Calendar,
-  Palette,
   FolderOpen,
   List,
 } from "lucide-react";
@@ -604,56 +603,6 @@ export const dateFieldDefinition = defineComponent<"date">({
 });
 
 /**
- * Color Picker Field
- * 
- * A custom field type that demonstrates how to integrate custom components
- * with the form-builder and auto-form systems. The color is stored as a
- * hex string (e.g., "#3b82f6") in the JSON Schema.
- */
-export const colorFieldDefinition = defineComponent<"string">({
-  type: "color",
-  backingType: "string",
-  label: "Color Picker",
-  icon: Palette,
-  defaultProps: {
-    label: "Color",
-    required: false,
-  },
-  propertiesSchema: baseMetaSchema
-    .merge(z.object({
-      defaultValue: z.string().optional().meta({ 
-        label: "Default Color",
-        description: "Enter a hex color like #3b82f6",
-      }),
-    })),
-  toJSONSchema: (props: StringFieldProps): JSONSchemaProperty => ({
-    type: "string",
-    label: props.label,
-    description: props.description,
-    fieldType: "color",
-    default: props.defaultValue,
-    // Pattern for hex colors
-    pattern: "^#[0-9A-Fa-f]{6}$",
-  }),
-  fromJSONSchema: (prop, key, isRequired) => {
-    // Match string type with explicit color fieldType
-    if (prop.type !== "string" || prop.fieldType !== "color") {
-      return null;
-    }
-    return {
-      id: key,
-      type: "color",
-      props: {
-        label: getLabel(prop, key),
-        description: prop.description,
-        required: isRequired,
-        defaultValue: prop.default as string | undefined,
-      },
-    };
-  },
-});
-
-/**
  * Object Field (Field Group)
  * 
  * A container field that groups other fields together as nested properties.
@@ -746,8 +695,9 @@ export const arrayFieldDefinition: FormBuilderComponentDefinition = {
  * All default components in order of specificity (more specific first)
  * This order matters for fromJSONSchema matching
  * 
- * Note: colorFieldDefinition is exported separately as an example of a custom
- * component that can be added via the `components` prop.
+ * Custom field definitions (color, file, image, etc.) should be created by
+ * consumers using the exported `defineComponent` utility and passed via the
+ * `components` prop.
  */
 export const defaultComponents: FormBuilderComponentDefinition[] = [
   // Container types (must be before primitives to match object/array JSON Schema)

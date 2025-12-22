@@ -37,9 +37,9 @@ import {
   urlFieldDefinition,
   phoneFieldDefinition,
   dateFieldDefinition,
-  colorFieldDefinition,
   defaultComponents,
 } from "@/components/ui/form-builder/components";
+import { colorFieldDefinition } from "@/lib/custom-fields";
 
 describe("Field definition propertiesSchema serialization", () => {
   describe("Text field", () => {

@@ -1,16 +1,19 @@
 import type {
   FormBuilderComponentDefinition,
   FormBuilderField,
+  FormStep,
   JSONSchema,
   JSONSchemaProperty,
 } from "./types";
 
 /**
  * Helper to convert fields to JSON Schema properties (recursive)
+ * @param includeStepGroup - Whether to include stepGroup in the schema (only for multi-step forms)
  */
 function fieldsToProperties(
   fields: FormBuilderField[],
-  components: FormBuilderComponentDefinition[]
+  components: FormBuilderComponentDefinition[],
+  includeStepGroup: boolean = false
 ): Record<string, JSONSchemaProperty> {
   const properties: Record<string, JSONSchemaProperty> = {};
 
@@ -24,9 +27,14 @@ function fieldsToProperties(
     const isRequired = field.props.required ?? false;
     const schemaProp = component.toJSONSchema(field.props, isRequired);
 
+    // Add stepGroup if we're in multi-step mode and field has a stepGroup
+    if (includeStepGroup && field.stepGroup !== undefined) {
+      schemaProp.stepGroup = field.stepGroup;
+    }
+
     // Handle nested object fields
     if (field.type === "object" && field.children && field.children.length > 0) {
-      schemaProp.properties = fieldsToProperties(field.children, components);
+      schemaProp.properties = fieldsToProperties(field.children, components, false);
       const childRequired = field.children
         .filter((child) => child.props.required)
         .map((child) => child.id);
@@ -39,7 +47,7 @@ function fieldsToProperties(
     if (field.type === "array" && field.itemTemplate && field.itemTemplate.length > 0) {
       schemaProp.items = {
         type: "object",
-        properties: fieldsToProperties(field.itemTemplate, components),
+        properties: fieldsToProperties(field.itemTemplate, components, false),
       };
       const itemRequired = field.itemTemplate
         .filter((item) => item.props.required)
@@ -64,18 +72,24 @@ function getRequiredFieldIds(fields: FormBuilderField[]): string[] {
 
 /**
  * Convert internal fields to JSON Schema
+ * @param steps - Optional steps array for multi-step forms
  */
 export function fieldsToJSONSchema(
   fields: FormBuilderField[],
-  components: FormBuilderComponentDefinition[]
+  components: FormBuilderComponentDefinition[],
+  steps?: FormStep[]
 ): JSONSchema {
-  const properties = fieldsToProperties(fields, components);
+  // Include stepGroup in properties only if we have multiple steps
+  const hasMultipleSteps = steps && steps.length > 1;
+  const properties = fieldsToProperties(fields, components, hasMultipleSteps);
   const required = getRequiredFieldIds(fields);
 
   return {
     type: "object",
     properties,
     ...(required.length > 0 ? { required } : {}),
+    // Only include steps if there are multiple steps
+    ...(hasMultipleSteps ? { steps } : {}),
   };
 }
 
@@ -103,6 +117,11 @@ function propertiesToFields(
     }
 
     if (field) {
+      // Extract stepGroup from the property if present
+      if (prop.stepGroup !== undefined) {
+        field.stepGroup = prop.stepGroup;
+      }
+
       // Handle nested object fields
       if (field.type === "object" && prop.properties) {
         const childRequiredSet = new Set(prop.required || []);
@@ -128,6 +147,8 @@ function propertiesToFields(
           placeholder: prop.placeholder,
           required: isRequired,
         },
+        // Include stepGroup even for fallback fields
+        ...(prop.stepGroup !== undefined ? { stepGroup: prop.stepGroup } : {}),
       });
     }
   }
@@ -136,18 +157,40 @@ function propertiesToFields(
 }
 
 /**
+ * Result of parsing a JSON Schema
+ */
+export interface ParsedSchema {
+  fields: FormBuilderField[];
+  steps: FormStep[];
+}
+
+/**
+ * Convert JSON Schema to internal fields and extract steps
+ */
+export function jsonSchemaToFieldsAndSteps(
+  schema: JSONSchema | null | undefined,
+  components: FormBuilderComponentDefinition[]
+): ParsedSchema {
+  if (!schema || !schema.properties) {
+    return { fields: [], steps: [] };
+  }
+
+  const requiredSet = new Set(schema.required || []);
+  const fields = propertiesToFields(schema.properties, requiredSet, components);
+  const steps = schema.steps || [];
+
+  return { fields, steps };
+}
+
+/**
  * Convert JSON Schema to internal fields
+ * @deprecated Use jsonSchemaToFieldsAndSteps for multi-step support
  */
 export function jsonSchemaToFields(
   schema: JSONSchema | null | undefined,
   components: FormBuilderComponentDefinition[]
 ): FormBuilderField[] {
-  if (!schema || !schema.properties) {
-    return [];
-  }
-
-  const requiredSet = new Set(schema.required || []);
-  return propertiesToFields(schema.properties, requiredSet, components);
+  return jsonSchemaToFieldsAndSteps(schema, components).fields;
 }
 
 /**
@@ -162,4 +205,21 @@ export function generateFieldId(prefix: string = "field"): string {
  */
 export function sanitizeFieldId(id: string): string {
   return id.replace(/[^a-zA-Z0-9_]/g, "_").replace(/^[0-9]/, "_$&");
+}
+
+/**
+ * Generate a unique step ID
+ */
+export function generateStepId(): string {
+  return `step_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Create a new step with default title
+ */
+export function createStep(index: number): FormStep {
+  return {
+    id: generateStepId(),
+    title: `Step ${index + 1}`,
+  };
 }

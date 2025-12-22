@@ -3,9 +3,19 @@
 import AutoForm, { AutoFormSubmit } from "@/components/ui/auto-form";
 import { FieldInputProps } from "@/components/ui/auto-form/types";
 import { buildFieldConfigFromJsonSchema, toJSONSchemaWithDates, fromJSONSchemaWithDates } from "@/components/ui/auto-form/utils";
+import { AutoFormColorPicker } from "@/components/ui/color-picker";
+import { AutoFormFileUploader } from "@/components/ui/file-uploader";
+import { AutoFormImageUploader } from "@/components/ui/image-uploader";
 import { z } from "zod";
 
 import { filledFormValues } from "@/lib/constants";
+
+// Custom field components for AutoForm
+const customFieldComponents = {
+  color: AutoFormColorPicker,
+  file: AutoFormFileUploader,
+  image: AutoFormImageUploader,
+};
 
 // Comprehensive schema demonstrating all available field types
 // Using FieldConfigItem shape in .meta() for consistency
@@ -29,7 +39,6 @@ const allFieldsSchema = z.object({
   }),
   
   // Password input
-  // must inclue letters and numbers
   password: z.string().min(8, "Password must be at least 8 characters").meta({
     label: "Password",
     description: "At least 8 characters",
@@ -73,7 +82,7 @@ const allFieldsSchema = z.object({
     fieldType: "switch",
   }),
   
-  // Date picker - now works with JSON Schema via the override helper!
+  // Date picker
   birthDate: z.date().min(new Date("1900-01-01")).max(new Date("2025-12-31")).optional().meta({
     label: "Birth Date",
     description: "Your date of birth",
@@ -104,9 +113,25 @@ const allFieldsSchema = z.object({
       placeholder: "Select a country",
     },
   }),
-  
-  // File upload
-  // avatar: z.instanceof(File).optional(),
+
+  // Custom field types
+  favoriteColor: z.string().optional().meta({
+    label: "Favorite Color",
+    description: "Pick your favorite color",
+    fieldType: "color",
+  }),
+
+  resume: z.string().optional().meta({
+    label: "Resume",
+    description: "Upload your resume (PDF, DOC, etc.)",
+    fieldType: "file",
+  }),
+
+  avatar: z.string().optional().meta({
+    label: "Profile Picture",
+    description: "Upload your profile photo",
+    fieldType: "image",
+  }),
   
   // Nested object
   address: z.object({
@@ -174,12 +199,12 @@ type FormData = z.infer<typeof allFieldsSchema>;
 // Use our custom helper that handles z.date() -> { type: "string", format: "date-time" }
 const allFieldsJsonSchema = toJSONSchemaWithDates(allFieldsSchema);
 
+console.log(allFieldsJsonSchema)
+
 export default function Home() {
   const handleSubmit = (values: FormData) => {
     console.log("Form submitted:", values);
   };
-
-  console.log(toJSONSchemaWithDates(allFieldsSchema));
 
   return (
     <div className="min-h-screen ">
@@ -191,172 +216,162 @@ export default function Home() {
             AutoForm Demo
           </h1>
           <p className="text-lg ">
-            All available field types in one comprehensive form
+            All available field types including custom components (color, file, image)
           </p>
         </header>
 
         <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl grid grid-cols-3 gap-2">
-          <AutoForm
-            formSchema={allFieldsSchema}
-            onSubmit={handleSubmit}
-            fieldConfig={{
-              username: {
-                label: "User Name",
-                description: "Your unique username for the platform",
-                inputProps: {
-                  placeholder: "johndoe",
+          <div>
+            <h2 className="text-lg font-semibold mb-4 text-center">Zod Schema (Empty)</h2>
+            <AutoForm
+              formSchema={allFieldsSchema}
+              onSubmit={handleSubmit}
+              fieldConfig={{
+                username: {
+                  label: "User Name",
+                  description: "Your unique username for the platform",
+                  inputProps: { placeholder: "johndoe" },
                 },
-              },
-              email: {
-                description: "We'll never share your email",
-                inputProps: {
-                  placeholder: "john@example.com",
-                  type: "email",
+                email: {
+                  description: "We'll never share your email",
+                  inputProps: { placeholder: "john@example.com", type: "email" },
                 },
-              },
-              password: {
-                label: "Password",
-                description: "At least 8 characters",
-                inputProps: {
-                  placeholder: "••••••••",
-                  type: "password",
+                password: {
+                  label: "Password",
+                  description: "At least 8 characters",
+                  inputProps: { placeholder: "••••••••", type: "password" },
                 },
-              },
-              bio: {
-                label: "Bio",
-                description: "Tell us about yourself",
-                fieldType: "textarea",
-                inputProps: {
-                  placeholder: "I'm a software developer who loves...",
+                bio: {
+                  label: "Bio",
+                  description: "Tell us about yourself",
+                  fieldType: "textarea",
+                  inputProps: { placeholder: "I'm a software developer who loves..." },
                 },
-              },
-              age: {
-                label: "Age",
-                description: "Your current age",
-                inputProps: {
-                  placeholder: "25",
+                age: {
+                  label: "Age",
+                  description: "Your current age",
+                  inputProps: { placeholder: "25" },
                 },
-              },
-              acceptTerms: {
-                label: "Accept Terms & Conditions",
-                description: "You must accept to continue",
-              },
-              emailNotifications: {
-                label: "Email Notifications",
-                description: "Receive updates via email",
-                fieldType: "switch",
-              },
-              birthDate: {
-                label: "Birth Date",
-                description: "Your date of birth",
-                fieldType: "date",
-              },
-              role: {
-                label: "Role",
-                description: "Select your account role",
-                inputProps: {
-                  placeholder: "Select a role",
+                acceptTerms: {
+                  label: "Accept Terms & Conditions",
+                  description: "You must accept to continue",
                 },
-              },
-              gender: {
-                label: "Gender",
-                description: "Select your gender",
-                fieldType: "radio",
-              },
-              country: {
-                label: "Country",
-                description: "Where are you located?",
-                inputProps: {
-                  placeholder: "Select a country",
+                emailNotifications: {
+                  label: "Email Notifications",
+                  description: "Receive updates via email",
+                  fieldType: "switch",
                 },
-              },
-              // avatar: {
-              //   label: "Profile Picture",
-              //   description: "Upload your avatar (image files only)",
-              //   fieldType: "file",
-              // },
-              address: {
-                label: "Address",
-                street: {
-                  label: "Street Address",
-                  inputProps: {
-                    placeholder: "123 Main St",
+                birthDate: {
+                  label: "Birth Date",
+                  description: "Your date of birth",
+                  fieldType: "date",
+                },
+                role: {
+                  label: "Role",
+                  description: "Select your account role",
+                  inputProps: { placeholder: "Select a role" },
+                },
+                gender: {
+                  label: "Gender",
+                  description: "Select your gender",
+                  fieldType: "radio",
+                },
+                country: {
+                  label: "Country",
+                  description: "Where are you located?",
+                  inputProps: { placeholder: "Select a country" },
+                },
+                favoriteColor: {
+                  label: "Favorite Color",
+                  description: "Pick your favorite color",
+                  fieldType: AutoFormColorPicker,
+                },
+                resume: {
+                  label: "Resume",
+                  description: "Upload your resume (PDF, DOC, etc.)",
+                  fieldType: AutoFormFileUploader,
+                },
+                avatar: {
+                  label: "Profile Picture",
+                  description: "Upload your profile photo",
+                  fieldType: AutoFormImageUploader,
+                },
+                address: {
+                  label: "Address",
+                  street: {
+                    label: "Street Address",
+                    inputProps: { placeholder: "123 Main St" },
+                  },
+                  city: {
+                    label: "City",
+                    inputProps: { placeholder: "New York" },
+                  },
+                  zipCode: {
+                    label: "ZIP Code",
+                    inputProps: { placeholder: "10001" },
+                  },
+                  state: {
+                    label: "State",
+                    inputProps: { placeholder: "NY" },
                   },
                 },
-                city: {
-                  label: "City",
-                  inputProps: {
-                    placeholder: "New York",
-                  },
+                workExperience: {
+                  label: "Work Experience",
+                  description: "Add your previous work experience",
                 },
-                zipCode: {
-                  label: "ZIP Code",
-                  inputProps: {
-                    placeholder: "10001",
-                  },
+                preferredLanguage: {
+                  label: "Preferred Language",
+                  description: "Your primary language",
                 },
-                state: {
-                  label: "State",
-                  inputProps: {
-                    placeholder: "NY",
-                  },
+                website: {
+                  label: "Website",
+                  description: "Your personal or portfolio website",
+                  inputProps: { placeholder: "https://example.com" },
                 },
-              },
-              workExperience: {
-                label: "Work Experience",
-                description: "Add your previous work experience",
-              },
-              preferredLanguage: {
-                label: "Preferred Language",
-                description: "Your primary language",
-              },
-              website: {
-                label: "Website",
-                description: "Your personal or portfolio website",
-                inputProps: {
-                  placeholder: "https://example.com",
+                phone: {
+                  label: "Phone Number",
+                  description: "Your contact number",
+                  inputProps: { placeholder: "+1 (555) 123-4567", type: "tel" },
                 },
-              },
-              phone: {
-                label: "Phone Number",
-                description: "Your contact number",
-                inputProps: {
-                  placeholder: "+1 (555) 123-4567",
-                  type: "tel",
-                },
-              },
-            }}
-          >
-            <AutoFormSubmit className="mt-6 w-full">
-              Submit Form
-            </AutoFormSubmit>
-          </AutoForm>
-          <AutoForm
-            formSchema={fromJSONSchemaWithDates(allFieldsJsonSchema)}
-            onSubmit={(values) => handleSubmit(values as FormData)}
-            fieldConfig={buildFieldConfigFromJsonSchema(allFieldsJsonSchema)}
-          >
-            <AutoFormSubmit className="mt-6 w-full">
-              Submit Form
-            </AutoFormSubmit>
-          </AutoForm>
-          <AutoForm
-            formSchema={fromJSONSchemaWithDates(allFieldsJsonSchema)}
-            onSubmit={(values) => handleSubmit(values as FormData)}
-            fieldConfig={buildFieldConfigFromJsonSchema(allFieldsJsonSchema)}
-            values={filledFormValues}
-          >
-            <AutoFormSubmit className="mt-6 w-full">
-              Submit Form
-            </AutoFormSubmit>
-          </AutoForm>
+              }}
+            >
+              <AutoFormSubmit className="mt-6 w-full">
+                Submit Form
+              </AutoFormSubmit>
+            </AutoForm>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold mb-4 text-center">JSON Schema (Empty)</h2>
+            <AutoForm
+              formSchema={fromJSONSchemaWithDates(allFieldsJsonSchema)}
+              onSubmit={(values) => handleSubmit(values as FormData)}
+              fieldConfig={buildFieldConfigFromJsonSchema(allFieldsJsonSchema, customFieldComponents)}
+            >
+              <AutoFormSubmit className="mt-6 w-full">
+                Submit Form
+              </AutoFormSubmit>
+            </AutoForm>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold mb-4 text-center">JSON Schema (Filled)</h2>
+            <AutoForm
+              formSchema={fromJSONSchemaWithDates(allFieldsJsonSchema)}
+              onSubmit={(values) => handleSubmit(values as FormData)}
+              fieldConfig={buildFieldConfigFromJsonSchema(allFieldsJsonSchema, customFieldComponents)}
+              values={filledFormValues}
+            >
+              <AutoFormSubmit className="mt-6 w-full">
+                Submit Form
+              </AutoFormSubmit>
+            </AutoForm>
+          </div>
         </div>
 
         <footer className="mt-8 text-center text-sm ">
           <p>
             This form demonstrates all available AutoForm field types: text input, email, password, 
-            textarea, number, checkbox, switch, date picker, select, radio group, file upload, 
-            nested objects, and arrays.
+            textarea, number, checkbox, switch, date picker, select, radio group, color picker,
+            file upload, image upload, nested objects, and arrays.
           </p>
         </footer>
       </main>

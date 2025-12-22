@@ -431,8 +431,6 @@ export function fromJSONSchemaWithDates(jsonSchema: Record<string, unknown>): z.
 
 export function buildFieldConfigFromJsonSchema(
 	jsonSchema: Record<string, unknown>,
-	storedFieldConfig?: Record<string, { fieldType?: string }>, // TODO: figure out the use of this field and if we will break anything from btst by removing it
-	uploadImage?: (file: File) => Promise<string>,
 	fieldComponents?: Record<
 		string,
 		React.ComponentType<AutoFormInputComponentProps>
@@ -483,9 +481,9 @@ export function buildFieldConfigFromJsonSchema(
 			config.order = value.order;
 		}
 
-		// Extract fieldType from meta or storedFieldConfig
+		// Extract fieldType from JSON Schema meta
 		// Also detect date-time format from JSON Schema (from z.date() -> toJSONSchema with override)
-		let fieldType = value.fieldType ?? storedFieldConfig?.[key]?.fieldType;
+		let fieldType = value.fieldType;
 		
 		// Auto-detect date fields from JSON Schema format: "date-time"
 		// This handles the roundtrip: z.date() -> toJSONSchema (with override) -> { type: "string", format: "date-time" }
@@ -522,8 +520,6 @@ export function buildFieldConfigFromJsonSchema(
 		if (value.properties) {
 			const nestedConfig = buildFieldConfigFromJsonSchema(
 				{ properties: value.properties } as Record<string, unknown>,
-				undefined,
-				uploadImage,
 				fieldComponents,
 			);
 			// Merge nested config into this config

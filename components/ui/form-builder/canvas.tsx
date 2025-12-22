@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -7,7 +8,8 @@ import {
 } from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
 import { SortableField } from "./sortable-field";
-import type { FormBuilderField, FormBuilderComponentDefinition } from "./types";
+import { StepTabs } from "./step-tabs";
+import type { FormBuilderField, FormBuilderComponentDefinition, FormStep } from "./types";
 
 interface DropZoneProps {
   id: string;
@@ -45,6 +47,18 @@ interface CanvasProps {
   onConfigureNested?: (id: string) => void;
   isDraggingFromPalette: boolean;
   className?: string;
+  /** Steps for multi-step forms */
+  steps: FormStep[];
+  /** Currently active step index */
+  activeStepIndex: number;
+  /** Callback when active step changes */
+  onActiveStepChange: (index: number) => void;
+  /** Callback to add a new step */
+  onAddStep: () => void;
+  /** Callback to delete a step */
+  onDeleteStep: (index: number) => void;
+  /** Callback to rename a step */
+  onRenameStep: (index: number, newTitle: string) => void;
 }
 
 export function Canvas({
@@ -55,6 +69,12 @@ export function Canvas({
   onConfigureNested,
   isDraggingFromPalette,
   className,
+  steps,
+  activeStepIndex,
+  onActiveStepChange,
+  onAddStep,
+  onDeleteStep,
+  onRenameStep,
 }: CanvasProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: "canvas",
@@ -63,50 +83,77 @@ export function Canvas({
   const getComponent = (type: string) =>
     components.find((c) => c.type === type);
 
+  // Filter fields by active step when there are multiple steps
+  const visibleFields = useMemo(() => {
+    if (steps.length <= 1) {
+      // Single step mode - show all fields
+      return fields;
+    }
+    // Multi-step mode - filter by activeStepIndex
+    return fields.filter((f) => (f.stepGroup ?? 0) === activeStepIndex);
+  }, [fields, steps.length, activeStepIndex]);
+
+  // For sortable context, we only use visible fields
+  const sortableItems = useMemo(() => visibleFields.map((f) => f.id), [visibleFields]);
+
   return (
-    <div
-      ref={setNodeRef}
-      className={cn(
-        "flex-1 p-4 rounded-lg border-2 border-dashed min-h-[400px] transition-colors",
-        isOver && isDraggingFromPalette
-          ? "border-primary bg-primary/5"
-          : "border-muted-foreground/20",
-        className
-      )}
-    >
-      {fields.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-          <p className="text-lg font-medium">Drop components here</p>
-          <p className="text-sm">
-            Drag components from the palette to build your form
-          </p>
-        </div>
-      ) : (
-        <SortableContext
-          items={fields.map((f) => f.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="flex flex-col gap-2">
-            {/* Drop zone at the beginning */}
-            <DropZone id="drop-zone-start" isDraggingFromPalette={isDraggingFromPalette} />
-            
-            {fields.map((field, index) => (
-              <div key={field.id} className="flex flex-col gap-2">
-                <SortableField
-                  field={field}
-                  index={index}
-                  component={getComponent(field.type)}
-                  onEdit={() => onEditField(field.id)}
-                  onDelete={() => onDeleteField(field.id)}
-                  onConfigureNested={onConfigureNested ? () => onConfigureNested(field.id) : undefined}
-                />
-                {/* Drop zone after each field */}
-                <DropZone id={`drop-zone-${field.id}`} isDraggingFromPalette={isDraggingFromPalette} />
-              </div>
-            ))}
+    <div className={cn("flex flex-col h-full", className)}>
+      {/* Step Tabs */}
+      <StepTabs
+        steps={steps}
+        activeStepIndex={activeStepIndex}
+        onActiveStepChange={onActiveStepChange}
+        onAddStep={onAddStep}
+        onDeleteStep={onDeleteStep}
+        onRenameStep={onRenameStep}
+      />
+
+      {/* Canvas Drop Area */}
+      <div
+        ref={setNodeRef}
+        className={cn(
+          "flex-1 p-4 rounded-lg border-2 border-dashed min-h-[400px] transition-colors",
+          isOver && isDraggingFromPalette
+            ? "border-primary bg-primary/5"
+            : "border-muted-foreground/20"
+        )}
+      >
+        {visibleFields.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+            <p className="text-lg font-medium">Drop components here</p>
+            <p className="text-sm">
+              {steps.length > 1
+                ? `Drag components from the palette to add to ${steps[activeStepIndex]?.title || "this step"}`
+                : "Drag components from the palette to build your form"}
+            </p>
           </div>
-        </SortableContext>
-      )}
+        ) : (
+          <SortableContext
+            items={sortableItems}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="flex flex-col gap-2">
+              {/* Drop zone at the beginning */}
+              <DropZone id="drop-zone-start" isDraggingFromPalette={isDraggingFromPalette} />
+              
+              {visibleFields.map((field, index) => (
+                <div key={field.id} className="flex flex-col gap-2">
+                  <SortableField
+                    field={field}
+                    index={index}
+                    component={getComponent(field.type)}
+                    onEdit={() => onEditField(field.id)}
+                    onDelete={() => onDeleteField(field.id)}
+                    onConfigureNested={onConfigureNested ? () => onConfigureNested(field.id) : undefined}
+                  />
+                  {/* Drop zone after each field */}
+                  <DropZone id={`drop-zone-${field.id}`} isDraggingFromPalette={isDraggingFromPalette} />
+                </div>
+              ))}
+            </div>
+          </SortableContext>
+        )}
+      </div>
     </div>
   );
 }

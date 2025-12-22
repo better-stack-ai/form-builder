@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { z } from "zod";
-import AutoForm, { AutoFormSubmit } from "@/components/ui/auto-form";
+import { SteppedAutoForm } from "@/components/ui/auto-form/stepped-auto-form";
 import { buildFieldConfigFromJsonSchema } from "@/components/ui/auto-form/utils";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -27,13 +27,33 @@ interface FormPreviewProps {
 export function FormPreview({ schema, className, fieldComponents, defaultValues }: FormPreviewProps) {
   const [submittedValues, setSubmittedValues] = useState<Record<string, unknown> | null>(null);
 
-  // Create Zod schema from JSON Schema
+  // Create Zod schema from JSON Schema, preserving steps metadata
   const zodSchema = useMemo(() => {
     try {
       if (!schema.properties || Object.keys(schema.properties).length === 0) {
         return null;
       }
-      return z.fromJSONSchema(schema as unknown as z.core.JSONSchema.JSONSchema);
+      let baseSchema = z.fromJSONSchema(schema as unknown as z.core.JSONSchema.JSONSchema);
+      
+      // Re-attach steps metadata to the Zod schema so it survives toJSONSchema() roundtrip
+      // z.fromJSONSchema() doesn't preserve custom properties like 'steps'
+      if (schema.steps && schema.steps.length > 0) {
+        // Build stepGroup map from the original JSON Schema properties
+        const stepGroupMap: Record<string, number> = {};
+        for (const [fieldName, fieldSchema] of Object.entries(schema.properties)) {
+          if (typeof fieldSchema.stepGroup === "number") {
+            stepGroupMap[fieldName] = fieldSchema.stepGroup;
+          }
+        }
+        
+        // Add steps and stepGroup metadata to the schema
+        baseSchema = baseSchema.meta({ 
+          steps: schema.steps,
+          stepGroupMap 
+        });
+      }
+      
+      return baseSchema;
     } catch (error) {
       console.error("Failed to parse JSON Schema:", error);
       return null;
@@ -48,8 +68,6 @@ export function FormPreview({ schema, className, fieldComponents, defaultValues 
     try {
       return buildFieldConfigFromJsonSchema(
         schema as unknown as Record<string, unknown>,
-        undefined, // storedFieldConfig
-        undefined, // uploadImage
         mergedFieldComponents
       );
     } catch (error) {
@@ -101,16 +119,13 @@ export function FormPreview({ schema, className, fieldComponents, defaultValues 
               </p>
             </div>
             <div className="rounded-lg border bg-card p-6">
-              <AutoForm
+              <SteppedAutoForm
                 formSchema={zodSchema}
                 onSubmit={handleSubmit}
                 fieldConfig={fieldConfig}
                 values={defaultValues}
-              >
-                <AutoFormSubmit className="w-full mt-4">
-                  Submit
-                </AutoFormSubmit>
-              </AutoForm>
+                submitButtonText="Submit"
+              />
             </div>
           </div>
         )}

@@ -258,6 +258,13 @@ export function NestedFieldEditorDialog({
                   onEditField={handleEditField}
                   onDeleteField={handleDeleteField}
                   isDraggingFromPalette={activeDragData?.type === "palette"}
+                  // Nested fields don't support steps - pass empty/no-op handlers
+                  steps={[]}
+                  activeStepIndex={0}
+                  onActiveStepChange={() => {}}
+                  onAddStep={() => {}}
+                  onDeleteStep={() => {}}
+                  onRenameStep={() => {}}
                 />
               </div>
             </div>

@@ -14,10 +14,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type {
   FormBuilderField,
   FormBuilderComponentDefinition,
   FormBuilderFieldProps,
+  FormStep,
 } from "./types";
 
 interface EditFieldDialogProps {
@@ -26,6 +34,10 @@ interface EditFieldDialogProps {
   field: FormBuilderField | null;
   component: FormBuilderComponentDefinition | null;
   onUpdate: (id: string, props: Partial<FormBuilderFieldProps>, newId?: string) => void;
+  /** Steps for multi-step forms */
+  steps?: FormStep[];
+  /** Callback to update field's step group */
+  onUpdateStepGroup?: (fieldId: string, stepGroup: number) => void;
 }
 
 export function EditFieldDialog({
@@ -34,6 +46,8 @@ export function EditFieldDialog({
   field,
   component,
   onUpdate,
+  steps = [],
+  onUpdateStepGroup,
 }: EditFieldDialogProps) {
   // Compute initial values when field or dialog state changes
   // We intentionally reset when `open` changes to reinitialize the form
@@ -129,6 +143,31 @@ export function EditFieldDialog({
               This is the key used in the form data and JSON schema
             </p>
           </div>
+
+          {/* Step Selector (only shown when multiple steps exist) */}
+          {steps.length > 1 && onUpdateStepGroup && field && (
+            <div className="space-y-2">
+              <Label htmlFor="field-step">Step</Label>
+              <Select
+                value={String(field.stepGroup ?? 0)}
+                onValueChange={(value) => onUpdateStepGroup(field.id, parseInt(value, 10))}
+              >
+                <SelectTrigger id="field-step">
+                  <SelectValue placeholder="Select step" />
+                </SelectTrigger>
+                <SelectContent>
+                  {steps.map((step, index) => (
+                    <SelectItem key={step.id} value={String(index)}>
+                      {step.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Which step this field belongs to
+              </p>
+            </div>
+          )}
 
           {/* Properties Form */}
           <div className="border-t pt-4">

@@ -22,6 +22,20 @@ export type {
   InputPropsByBackingType,
 };
 
+// ============================================================================
+// STEP TYPES
+// ============================================================================
+
+/**
+ * Represents a step in a multi-step form.
+ */
+export interface FormStep {
+  /** Unique identifier for the step */
+  id: string;
+  /** Display title for the step */
+  title: string;
+}
+
 /**
  * JSON Schema types for form builder I/O.
  * Extends the shared base types with form-builder specific needs.
@@ -31,6 +45,9 @@ export interface JSONSchema {
   properties: Record<string, JSONSchemaProperty>;
   required?: string[];
   $schema?: string;
+  /** Step definitions for multi-step forms (stored in schema meta) */
+  steps?: FormStep[];
+  additionalProperties?: boolean;
 }
 
 /**
@@ -50,6 +67,8 @@ export interface JSONSchemaProperty extends Omit<JSONSchemaPropertyBase, "type" 
   minItems?: number;
   /** Maximum items for array types */
   maxItems?: number;
+  /** Step group index for multi-step forms (0-indexed) */
+  stepGroup?: number;
 }
 
 /**
@@ -63,6 +82,8 @@ export interface FormBuilderField {
   children?: FormBuilderField[];
   /** Template fields defining the shape of each array item */
   itemTemplate?: FormBuilderField[];
+  /** Step group index (0-indexed) for multi-step forms */
+  stepGroup?: number;
 }
 
 /**

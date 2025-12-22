@@ -28,11 +28,12 @@ import { NestedFieldEditorDialog } from "./nested-field-editor-dialog";
 import { FormPreview } from "./form-preview";
 import { FieldDragOverlay } from "./sortable-field";
 import { defaultComponents, getComponentByType } from "./components";
-import { fieldsToJSONSchema, jsonSchemaToFields, generateFieldId } from "./schema-utils";
+import { fieldsToJSONSchema, jsonSchemaToFieldsAndSteps, generateFieldId, createStep } from "./schema-utils";
 import type {
   FormBuilderComponentDefinition,
   FormBuilderField,
   FormBuilderFieldProps,
+  FormStep,
   JSONSchema,
   DragData,
   PaletteDragData,
@@ -40,12 +41,16 @@ import type {
 import type { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
 
 // Re-export types and components for external use
-export { defaultComponents, colorFieldDefinition, objectFieldDefinition, arrayFieldDefinition } from "./components";
+export { defaultComponents, objectFieldDefinition, arrayFieldDefinition } from "./components";
+export { defineComponent } from "./types";
+export { baseMetaSchema, baseMetaSchemaWithPlaceholder } from "./validation-schemas";
 export type {
   FormBuilderComponentDefinition,
   FormBuilderField,
   FormBuilderFieldProps,
   JSONSchema,
+  JSONSchemaProperty,
+  StringFieldProps,
 } from "./types";
 
 interface FormBuilderProps {
@@ -103,28 +108,41 @@ export function FormBuilder({
   
   // Internal state - initialized from value prop if provided
   // Note: To reset fields from parent, use a key prop on FormBuilder
-  const [fields, setFields] = useState<FormBuilderField[]>(() =>
-    value ? jsonSchemaToFields(value, components) : []
-  );
+  const [fields, setFields] = useState<FormBuilderField[]>(() => {
+    if (!value) return [];
+    const { fields: parsedFields } = jsonSchemaToFieldsAndSteps(value, components);
+    return parsedFields;
+  });
+  
+  // Steps state for multi-step forms
+  const [steps, setSteps] = useState<FormStep[]>(() => {
+    if (!value) return [];
+    const { steps: parsedSteps } = jsonSchemaToFieldsAndSteps(value, components);
+    return parsedSteps;
+  });
+  
+  // Active step index for canvas filtering
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
+  
   const [editDialogFieldId, setEditDialogFieldId] = useState<string | null>(null);
   const [nestedEditorFieldId, setNestedEditorFieldId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
 
-  // Notify onChange when fields change
+  // Notify onChange when fields or steps change
   const notifyChange = useCallback(
-    (newFields: FormBuilderField[]) => {
+    (newFields: FormBuilderField[], newSteps?: FormStep[]) => {
       if (onChange) {
-        const schema = fieldsToJSONSchema(newFields, components);
+        const schema = fieldsToJSONSchema(newFields, components, newSteps ?? steps);
         onChange(schema);
       }
     },
-    [onChange, components]
+    [onChange, components, steps]
   );
 
   // Get current JSON Schema for preview
   const currentSchema = useMemo(
-    () => fieldsToJSONSchema(fields, components),
-    [fields, components]
+    () => fieldsToJSONSchema(fields, components, steps),
+    [fields, components, steps]
   );
 
   // Sensors for dnd-kit with touch support
@@ -202,6 +220,8 @@ export function FormBuilder({
             label: component.defaultProps.label || component.label,
             ...component.defaultProps,
           },
+          // Assign to active step when in multi-step mode
+          ...(steps.length > 1 ? { stepGroup: activeStepIndex } : {}),
         };
 
         // Determine insertion index based on where item was dropped
@@ -300,6 +320,99 @@ export function FormBuilder({
     [fields, notifyChange]
   );
 
+  // ============================================================================
+  // STEP HANDLERS
+  // ============================================================================
+
+  // Add a new step
+  const handleAddStep = useCallback(() => {
+    const newStep = createStep(steps.length);
+    const newSteps = [...steps, newStep];
+    
+    // If this is the second step, we need to assign all existing fields to step 0
+    if (steps.length === 1) {
+      const updatedFields = fields.map((f) => ({ ...f, stepGroup: 0 }));
+      setFields(updatedFields);
+      setSteps(newSteps);
+      notifyChange(updatedFields, newSteps);
+    } else if (steps.length === 0) {
+      // First step - create two steps (Step 1 and Step 2)
+      const firstStep = createStep(0);
+      const secondStep = createStep(1);
+      const bothSteps = [firstStep, secondStep];
+      const updatedFields = fields.map((f) => ({ ...f, stepGroup: 0 }));
+      setFields(updatedFields);
+      setSteps(bothSteps);
+      notifyChange(updatedFields, bothSteps);
+    } else {
+      setSteps(newSteps);
+      notifyChange(fields, newSteps);
+    }
+  }, [steps, fields, notifyChange]);
+
+  // Delete a step
+  const handleDeleteStep = useCallback(
+    (index: number) => {
+      if (steps.length <= 2) {
+        // Going from 2 steps to single-step mode
+        // Remove stepGroup from all fields
+        const updatedFields = fields.map((f) => {
+          const { stepGroup: _, ...rest } = f;
+          return rest;
+        });
+        setFields(updatedFields);
+        setSteps([]);
+        setActiveStepIndex(0);
+        notifyChange(updatedFields, []);
+      } else {
+        // Remove the step and reassign orphaned fields to step 0
+        const newSteps = steps.filter((_, i) => i !== index);
+        const updatedFields = fields.map((f) => {
+          if (f.stepGroup === index) {
+            // Reassign to first step
+            return { ...f, stepGroup: 0 };
+          } else if (f.stepGroup !== undefined && f.stepGroup > index) {
+            // Decrement stepGroup for fields after the deleted step
+            return { ...f, stepGroup: f.stepGroup - 1 };
+          }
+          return f;
+        });
+        setFields(updatedFields);
+        setSteps(newSteps);
+        // Adjust active step if needed
+        if (activeStepIndex >= newSteps.length) {
+          setActiveStepIndex(newSteps.length - 1);
+        }
+        notifyChange(updatedFields, newSteps);
+      }
+    },
+    [steps, fields, activeStepIndex, notifyChange]
+  );
+
+  // Rename a step
+  const handleRenameStep = useCallback(
+    (index: number, newTitle: string) => {
+      const newSteps = steps.map((step, i) =>
+        i === index ? { ...step, title: newTitle } : step
+      );
+      setSteps(newSteps);
+      notifyChange(fields, newSteps);
+    },
+    [steps, fields, notifyChange]
+  );
+
+  // Update field step group
+  const handleUpdateFieldStepGroup = useCallback(
+    (fieldId: string, stepGroup: number) => {
+      const newFields = fields.map((f) =>
+        f.id === fieldId ? { ...f, stepGroup } : f
+      );
+      setFields(newFields);
+      notifyChange(newFields);
+    },
+    [fields, notifyChange]
+  );
+
   // Get edit dialog field and its component
   const editDialogField = fields.find((f) => f.id === editDialogFieldId) || null;
   const editDialogComponent = editDialogField
@@ -334,6 +447,12 @@ export function FormBuilder({
               onDeleteField={handleDeleteField}
               onConfigureNested={handleConfigureNested}
               isDraggingFromPalette={activeDragData?.type === "palette"}
+              steps={steps}
+              activeStepIndex={activeStepIndex}
+              onActiveStepChange={setActiveStepIndex}
+              onAddStep={handleAddStep}
+              onDeleteStep={handleDeleteStep}
+              onRenameStep={handleRenameStep}
             />
           </div>
 
@@ -385,6 +504,8 @@ export function FormBuilder({
         field={editDialogField}
         component={editDialogComponent}
         onUpdate={handleUpdateField}
+        steps={steps}
+        onUpdateStepGroup={handleUpdateFieldStepGroup}
       />
 
       {/* Nested Field Editor Dialog */}
