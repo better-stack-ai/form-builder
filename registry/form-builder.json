@@ -10,7 +10,7 @@
     "@dnd-kit/utilities"
   ],
   "registryDependencies": [
-    "auto-form",
+    "https://raw.githubusercontent.com/better-stack-ai/form-builder/refs/heads/main/registry/auto-form.json",
     "tabs",
     "dialog",
     "accordion",

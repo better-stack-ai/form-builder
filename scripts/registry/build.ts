@@ -208,7 +208,11 @@ function buildSteppedAutoFormItem(): RegistryItem {
     title: "Stepped Auto Form",
     description:
       "Multi-step form wizard built on auto-form with step navigation and validation.",
-    registryDependencies: ["auto-form", "button", "separator"],
+    registryDependencies: [
+      "https://raw.githubusercontent.com/better-stack-ai/form-builder/refs/heads/main/registry/auto-form.json",
+      "button",
+      "separator",
+    ],
     dependencies: [],
     files: [createRegistryFile(registryPath)],
   };
@@ -232,7 +236,7 @@ function buildFormBuilderItem(): RegistryItem {
     description:
       "Visual drag-and-drop form builder with JSON Schema output and live preview.",
     registryDependencies: [
-      "auto-form",
+      "https://raw.githubusercontent.com/better-stack-ai/form-builder/refs/heads/main/registry/auto-form.json",
       "tabs",
       "dialog",
       "accordion",
