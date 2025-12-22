@@ -52,7 +52,6 @@ export const BUILTIN_FIELD_TYPES = [
 	"switch",
 	"textarea",
 	"number",
-	"file",
 	"fallback",
 ] as const;
 
@@ -493,8 +492,8 @@ export function buildFieldConfigFromJsonSchema(
 
 		if (fieldType) {
 			// 1. Check if there's a custom component in fieldComponents
-			if (fieldComponents?.[fieldType]) {
-				const CustomComponent = fieldComponents[fieldType];
+			const CustomComponent = fieldComponents?.[fieldType];
+			if (CustomComponent) {
 				config.fieldType = (props: AutoFormInputComponentProps) => (
 					<CustomComponent {...props} />
 				);
