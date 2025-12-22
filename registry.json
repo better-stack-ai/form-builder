@@ -1,0 +1,204 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "form-builder",
+  "homepage": "https://github.com/your-org/form-builder",
+  "items": [
+    {
+      "name": "auto-form",
+      "type": "registry:block",
+      "title": "Auto Form",
+      "description": "Automatically generate forms from Zod schemas with full TypeScript support.",
+      "registryDependencies": [
+        "button",
+        "form",
+        "input",
+        "checkbox",
+        "label",
+        "select",
+        "radio-group",
+        "switch",
+        "textarea",
+        "calendar",
+        "popover"
+      ],
+      "dependencies": [
+        "zod",
+        "react-hook-form",
+        "@hookform/resolvers"
+      ],
+      "files": [
+        {
+          "path": "components/ui/auto-form/common/label.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/auto-form/common/tooltip.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/auto-form/config.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "components/ui/auto-form/dependencies.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "components/ui/auto-form/fields/array.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/auto-form/fields/checkbox.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/auto-form/fields/date.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/auto-form/fields/enum.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/auto-form/fields/input.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/auto-form/fields/number.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/auto-form/fields/object.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/auto-form/fields/radio-group.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/auto-form/fields/switch.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/auto-form/fields/textarea.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/auto-form/index.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/auto-form/types.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "components/ui/auto-form/utils.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/form.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/shared-form-types.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "lib/utils.ts",
+          "type": "registry:lib"
+        }
+      ]
+    },
+    {
+      "name": "stepped-auto-form",
+      "type": "registry:block",
+      "title": "Stepped Auto Form",
+      "description": "Multi-step form wizard built on auto-form with step navigation and validation.",
+      "registryDependencies": [
+        "auto-form",
+        "button",
+        "separator"
+      ],
+      "dependencies": [],
+      "files": [
+        {
+          "path": "components/ui/auto-form/stepped-auto-form.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "form-builder",
+      "type": "registry:block",
+      "title": "Form Builder",
+      "description": "Visual drag-and-drop form builder with JSON Schema output and live preview.",
+      "registryDependencies": [
+        "auto-form",
+        "tabs",
+        "dialog",
+        "accordion",
+        "separator"
+      ],
+      "dependencies": [
+        "@dnd-kit/core",
+        "@dnd-kit/sortable",
+        "@dnd-kit/modifiers",
+        "@dnd-kit/utilities"
+      ],
+      "files": [
+        {
+          "path": "components/ui/form-builder/canvas.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/form-builder/components/index.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/form-builder/edit-field-dialog.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/form-builder/form-preview.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/form-builder/index.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/form-builder/nested-field-editor-dialog.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/form-builder/palette.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/form-builder/property-panel.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/form-builder/schema-utils.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "components/ui/form-builder/sortable-field.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/form-builder/step-tabs.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "components/ui/form-builder/types.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "components/ui/form-builder/validation-schemas.ts",
+          "type": "registry:lib"
+        }
+      ]
+    }
+  ]
+}

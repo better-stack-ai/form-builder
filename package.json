@@ -12,7 +12,7 @@
     "test:ui": "playwright test --ui",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "build-registry": "npx tsx scripts/build.ts",
+    "build-registry": "npx tsx scripts/registry/build.ts",
     "host-registry": "npx http-server registry"
   },
   "dependencies": {
