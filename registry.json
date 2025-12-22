@@ -37,11 +37,11 @@
         },
         {
           "path": "components/ui/auto-form/config.ts",
-          "type": "registry:lib"
+          "type": "registry:component"
         },
         {
           "path": "components/ui/auto-form/dependencies.ts",
-          "type": "registry:lib"
+          "type": "registry:component"
         },
         {
           "path": "components/ui/auto-form/fields/array.tsx",
@@ -89,7 +89,7 @@
         },
         {
           "path": "components/ui/auto-form/types.ts",
-          "type": "registry:lib"
+          "type": "registry:component"
         },
         {
           "path": "components/ui/auto-form/utils.tsx",
@@ -101,7 +101,7 @@
         },
         {
           "path": "components/ui/shared-form-types.ts",
-          "type": "registry:lib"
+          "type": "registry:component"
         },
         {
           "path": "lib/utils.ts",
@@ -180,7 +180,7 @@
         },
         {
           "path": "components/ui/form-builder/schema-utils.ts",
-          "type": "registry:lib"
+          "type": "registry:component"
         },
         {
           "path": "components/ui/form-builder/sortable-field.tsx",
@@ -192,11 +192,11 @@
         },
         {
           "path": "components/ui/form-builder/types.ts",
-          "type": "registry:lib"
+          "type": "registry:component"
         },
         {
           "path": "components/ui/form-builder/validation-schemas.ts",
-          "type": "registry:lib"
+          "type": "registry:component"
         }
       ]
     }

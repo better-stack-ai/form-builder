@@ -12,8 +12,8 @@
     "test:ui": "playwright test --ui",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "build-registry": "npx tsx scripts/registry/build.ts",
-    "host-registry": "npx http-server registry"
+    "build-registry": "pnpm dlx tsx scripts/registry/build.ts",
+    "host-registry": "pnpm dlx http-server registry"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

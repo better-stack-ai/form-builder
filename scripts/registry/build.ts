@@ -77,23 +77,20 @@ function getFilesRecursively(dir: string, baseDir: string = dir): string[] {
 
 /**
  * Determine the registry file type based on file path
+ * 
+ * Note: Files in components/ should use "registry:component" to preserve
+ * their directory structure during installation. Only files actually in
+ * lib/ should use "registry:lib".
  */
 function getFileType(filePath: string): RegistryFile["type"] {
-  const fileName = path.basename(filePath);
-  const ext = path.extname(filePath);
-
-  // TSX files are components
-  if (ext === ".tsx") {
-    return "registry:component";
-  }
-
-  // TS files are lib/utils
-  if (ext === ".ts") {
+  // Files in lib/ folder should be placed in lib/
+  if (filePath.startsWith("lib/")) {
     return "registry:lib";
   }
 
-  // Default to lib for other files
-  return "registry:lib";
+  // All files in components/ should stay in components/
+  // Using "registry:component" preserves the path structure
+  return "registry:component";
 }
 
 /**

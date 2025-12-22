@@ -16,13 +16,13 @@ Install components using the shadcn CLI:
 
 ```bash
 # Install auto-form
-npx shadcn@latest add "https://your-registry-url/auto-form.json"
+npx shadcn@latest add "https://raw.githubusercontent.com/better-stack-ai/form-builder/refs/heads/main/registry/auto-form.json"
 
 # Install stepped-auto-form (requires auto-form)
-npx shadcn@latest add "https://your-registry-url/stepped-auto-form.json"
+npx shadcn@latest add "https://raw.githubusercontent.com/better-stack-ai/form-builder/refs/heads/main/registry/stepped-auto-form.json"
 
 # Install form-builder (requires auto-form)
-npx shadcn@latest add "https://your-registry-url/form-builder.json"
+npx shadcn@latest add "https://raw.githubusercontent.com/better-stack-ai/form-builder/refs/heads/main/registry/form-builder.json"
 ```
 
 ---
