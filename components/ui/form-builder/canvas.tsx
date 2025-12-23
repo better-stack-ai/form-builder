@@ -59,6 +59,8 @@ interface CanvasProps {
   onDeleteStep: (index: number) => void;
   /** Callback to rename a step */
   onRenameStep: (index: number, newTitle: string) => void;
+  /** Hide all step controls (used in nested field editor) */
+  hideStepControls?: boolean;
 }
 
 export function Canvas({
@@ -75,6 +77,7 @@ export function Canvas({
   onAddStep,
   onDeleteStep,
   onRenameStep,
+  hideStepControls,
 }: CanvasProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: "canvas",
@@ -106,11 +109,13 @@ export function Canvas({
         onAddStep={onAddStep}
         onDeleteStep={onDeleteStep}
         onRenameStep={onRenameStep}
+        hideStepControls={hideStepControls}
       />
 
       {/* Canvas Drop Area */}
       <div
         ref={setNodeRef}
+        data-testid="form-builder-canvas"
         className={cn(
           "flex-1 p-4 rounded-lg border-2 border-dashed min-h-[400px] transition-colors",
           isOver && isDraggingFromPalette
@@ -119,7 +124,7 @@ export function Canvas({
         )}
       >
         {visibleFields.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground"  data-testid="canvas-drop-zone">
             <p className="text-lg font-medium">Drop components here</p>
             <p className="text-sm">
               {steps.length > 1
