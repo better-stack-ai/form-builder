@@ -33,11 +33,11 @@ interface EditFieldDialogProps {
   onOpenChange: (open: boolean) => void;
   field: FormBuilderField | null;
   component: FormBuilderComponentDefinition | null;
-  onUpdate: (id: string, props: Partial<FormBuilderFieldProps>, newId?: string) => void;
+  onUpdate: (id: string, props: Partial<FormBuilderFieldProps>, newId?: string, stepGroup?: number) => void;
   /** Steps for multi-step forms */
   steps?: FormStep[];
-  /** Callback to update field's step group */
-  onUpdateStepGroup?: (fieldId: string, stepGroup: number) => void;
+  /** All existing field IDs for duplicate validation */
+  allFieldIds?: string[];
 }
 
 export function EditFieldDialog({
@@ -47,7 +47,7 @@ export function EditFieldDialog({
   component,
   onUpdate,
   steps = [],
-  onUpdateStepGroup,
+  allFieldIds = [],
 }: EditFieldDialogProps) {
   // Compute initial values when field or dialog state changes
   // We intentionally reset when `open` changes to reinitialize the form
@@ -69,6 +69,12 @@ export function EditFieldDialog({
   const fieldName = fieldNameOverride ?? initialValues.fieldName;
   const localProps = localPropsOverride ?? initialValues.props;
   const localStepGroup = stepGroupOverride ?? field?.stepGroup ?? 0;
+
+  // Check for duplicate field ID (only when changing to a different ID)
+  const isDuplicateId = useMemo(() => {
+    if (!field || fieldName === field.id) return false;
+    return allFieldIds.some((id) => id === fieldName && id !== field.id);
+  }, [fieldName, field, allFieldIds]);
 
   // Reset overrides when initial values change
   const [prevInitial, setPrevInitial] = useState(initialValues);
@@ -105,15 +111,18 @@ export function EditFieldDialog({
 
     // Determine if we need to update the ID
     const newId = fieldName !== field.id ? fieldName : undefined;
-    onUpdate(field.id, props, newId);
     
-    // Update step group if changed (only apply on save)
-    if (onUpdateStepGroup && stepGroupOverride !== null && stepGroupOverride !== field.stepGroup) {
-      onUpdateStepGroup(newId ?? field.id, stepGroupOverride);
-    }
+    // Determine if we need to update the step group
+    // Only pass stepGroup if it was explicitly changed from the field's current value
+    const stepGroup = stepGroupOverride !== null && stepGroupOverride !== field.stepGroup 
+      ? stepGroupOverride 
+      : undefined;
+    
+    // Single atomic update for props, ID, and step group
+    onUpdate(field.id, props, newId, stepGroup);
     
     onOpenChange(false);
-  }, [field, localProps, fieldName, onUpdate, onOpenChange, onUpdateStepGroup, stepGroupOverride]);
+  }, [field, localProps, fieldName, onUpdate, onOpenChange, stepGroupOverride]);
 
   if (!field || !component) {
     return null;
@@ -147,14 +156,22 @@ export function EditFieldDialog({
               value={fieldName}
               onChange={(e) => setFieldNameOverride(e.target.value)}
               placeholder="Enter field name"
+              className={isDuplicateId ? "border-destructive focus-visible:ring-destructive" : ""}
+              aria-invalid={isDuplicateId}
             />
-            <p className="text-xs text-muted-foreground">
-              This is the key used in the form data and JSON schema
-            </p>
+            {isDuplicateId ? (
+              <p className="text-xs text-destructive">
+                A field with this name already exists. Please choose a different name.
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                This is the key used in the form data and JSON schema
+              </p>
+            )}
           </div>
 
           {/* Step Selector (only shown when multiple steps exist) */}
-          {steps.length > 1 && onUpdateStepGroup && field && (
+          {steps.length > 1 && field && (
             <div className="space-y-2">
               <Label htmlFor="field-step">Step</Label>
               <Select
@@ -195,7 +212,9 @@ export function EditFieldDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+          <Button onClick={handleSave} disabled={isDuplicateId}>
+            Save Changes
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

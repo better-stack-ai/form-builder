@@ -267,14 +267,32 @@ export function FormBuilder({
     }
   };
 
-  // Update field props (with optional ID change)
+  // Update field props (with optional ID change and step group)
   const handleUpdateField = useCallback(
-    (id: string, props: Partial<FormBuilderFieldProps>, newId?: string) => {
-      const newFields = fields.map((f) =>
-        f.id === id
-          ? { ...f, id: newId || f.id, props: { ...f.props, ...props } }
-          : f
-      );
+    (id: string, props: Partial<FormBuilderFieldProps>, newId?: string, stepGroup?: number) => {
+      // Validate that the new ID doesn't already exist on another field
+      if (newId && newId !== id) {
+        const idExists = fields.some((f) => f.id === newId && f.id !== id);
+        if (idExists) {
+          // Reject the update - duplicate ID would cause data loss
+          console.warn(`Cannot rename field "${id}" to "${newId}": a field with that ID already exists`);
+          return;
+        }
+      }
+      
+      const newFields = fields.map((f) => {
+        if (f.id !== id) return f;
+        const updated: FormBuilderField = { 
+          ...f, 
+          id: newId || f.id, 
+          props: { ...f.props, ...props } 
+        };
+        // Only update stepGroup if explicitly provided (not undefined)
+        if (stepGroup !== undefined) {
+          updated.stepGroup = stepGroup;
+        }
+        return updated;
+      });
       setFields(newFields);
       notifyChange(newFields);
     },
@@ -401,18 +419,6 @@ export function FormBuilder({
     [steps, fields, notifyChange]
   );
 
-  // Update field step group
-  const handleUpdateFieldStepGroup = useCallback(
-    (fieldId: string, stepGroup: number) => {
-      const newFields = fields.map((f) =>
-        f.id === fieldId ? { ...f, stepGroup } : f
-      );
-      setFields(newFields);
-      notifyChange(newFields);
-    },
-    [fields, notifyChange]
-  );
-
   // Get edit dialog field and its component
   const editDialogField = fields.find((f) => f.id === editDialogFieldId) || null;
   const editDialogComponent = editDialogField
@@ -505,7 +511,7 @@ export function FormBuilder({
         component={editDialogComponent}
         onUpdate={handleUpdateField}
         steps={steps}
-        onUpdateStepGroup={handleUpdateFieldStepGroup}
+        allFieldIds={fields.map((f) => f.id)}
       />
 
       {/* Nested Field Editor Dialog */}
