@@ -70,6 +70,62 @@ test.describe("Form Builder - Multi-Step Forms", () => {
     await expect(page.getByText("Add a step to create a multi-step form")).toBeVisible();
   });
 
+  test("should delete step 0 without merging fields from different steps", async ({ page }) => {
+    // Regression test: Deleting step 0 used to merge fields from step 0 and step 1
+    // into the same step because orphaned fields were assigned to stepGroup: 0
+    // while step 1 fields were also decremented to stepGroup: 0
+    
+    // Create 3 steps
+    await page.getByRole("button", { name: "Add Step" }).click();
+    await expect(page.getByRole("button", { name: "Step 1" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Step 2" })).toBeVisible();
+    
+    // Add a third step
+    await page.getByRole("button", { name: "Add Step" }).click();
+    await expect(page.getByRole("button", { name: "Step 3" })).toBeVisible();
+    
+    const canvasArea = page.getByTestId("form-builder-canvas");
+    
+    // Add a field to Step 1 (will be deleted)
+    await page.getByRole("button", { name: "Step 1" }).click();
+    const canvas = page.getByText("Drag components from the palette");
+    await page.getByText("Text Input", { exact: true }).dragTo(canvas);
+    await expect(canvasArea.getByText("Text Field", { exact: true }).first()).toBeVisible();
+    
+    // Add a field to Step 2 (will become new Step 1)
+    await page.getByRole("button", { name: "Step 2" }).click();
+    const emptyCanvas = page.getByText("Drop components here");
+    await page.getByTestId("form-builder-palette").getByText("Email", { exact: true }).dragTo(emptyCanvas);
+    // The field label for email is also "Email" - use first() to get the field label
+    await expect(canvasArea.getByText("Email", { exact: true }).first()).toBeVisible();
+    
+    // Add a field to Step 3 (will become new Step 2)
+    await page.getByRole("button", { name: "Step 3" }).click();
+    const emptyCanvas3 = page.getByText("Drop components here");
+    await page.getByTestId("form-builder-palette").getByText("Number", { exact: true }).dragTo(emptyCanvas3);
+    await expect(canvasArea.getByText("Number", { exact: true }).first()).toBeVisible();
+    
+    // Delete Step 1 (step 0)
+    const step1Tab = page.locator('[class*="rounded-md"]').filter({ hasText: "Step 1" }).first();
+    await step1Tab.hover();
+    await step1Tab.locator('button[title="Delete step"]').click();
+    
+    // Now we should have Step 2 and Step 3 remaining (they keep their original titles)
+    await expect(page.getByRole("button", { name: "Step 1" })).not.toBeVisible();
+    await expect(page.getByRole("button", { name: "Step 2" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Step 3" })).toBeVisible();
+    
+    // Step 2 (now first step) should only have Email field, not the merged Text Field
+    await page.getByRole("button", { name: "Step 2" }).click();
+    await expect(canvasArea.getByText("Email", { exact: true }).first()).toBeVisible();
+    // Text Field from deleted step should NOT be present
+    await expect(canvasArea.getByText("Text Field", { exact: true })).not.toBeVisible();
+    
+    // Step 3 (now second step) should have Number field
+    await page.getByRole("button", { name: "Step 3" }).click();
+    await expect(canvasArea.getByText("Number", { exact: true }).first()).toBeVisible();
+  });
+
   test("should assign new field to active step", async ({ page }) => {
     // Add steps first
     await page.getByRole("button", { name: "Add Step" }).click();

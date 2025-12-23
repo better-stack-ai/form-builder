@@ -226,8 +226,15 @@ function buildFormBuilderItem(): RegistryItem {
   const formBuilderFiles = getFilesRecursively(formBuilderDir)
     .map((f) => path.relative(ROOT_DIR, f));
 
+  // Add lib files that form-builder depends on
+  const libFiles = [
+    "lib/schema-converter.ts",  // Used by form-preview.tsx for Zod ↔ JSON Schema conversion
+  ];
+
+  const allSourceFiles = [...formBuilderFiles, ...libFiles];
+
   // Copy files to registry source and get transformed paths
-  const registryPaths = formBuilderFiles.map(copyToRegistrySrc);
+  const registryPaths = allSourceFiles.map(copyToRegistrySrc);
 
   return {
     name: "form-builder",

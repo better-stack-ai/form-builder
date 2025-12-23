@@ -226,7 +226,7 @@ export interface JSONSchemaPropertyBase {
   order?: number;
   
   // ========================
-  // Date constraints (from toJSONSchemaWithDates)
+  // Date constraints (from zodToFormSchema)
   // ========================
   /** Minimum date as ISO string */
   formatMinimum?: string;

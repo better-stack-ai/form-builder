@@ -193,6 +193,10 @@
         {
           "path": "components/form-builder/validation-schemas.ts",
           "type": "registry:component"
+        },
+        {
+          "path": "lib/schema-converter.ts",
+          "type": "registry:lib"
         }
       ]
     }

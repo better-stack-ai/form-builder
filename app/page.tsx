@@ -2,7 +2,8 @@
 
 import AutoForm, { AutoFormSubmit } from "@/components/ui/auto-form";
 import { FieldInputProps } from "@/components/ui/auto-form/types";
-import { buildFieldConfigFromJsonSchema, toJSONSchemaWithDates, fromJSONSchemaWithDates } from "@/components/ui/auto-form/utils";
+import { buildFieldConfigFromJsonSchema } from "@/components/ui/auto-form/utils";
+import { zodToFormSchema, formSchemaToZod } from "@/lib/schema-converter";
 import { AutoFormColorPicker } from "@/components/ui/color-picker";
 import { AutoFormFileUploader } from "@/components/ui/file-uploader";
 import { AutoFormImageUploader } from "@/components/ui/image-uploader";
@@ -197,7 +198,7 @@ const allFieldsSchema = z.object({
 type FormData = z.infer<typeof allFieldsSchema>;
 
 // Use our custom helper that handles z.date() -> { type: "string", format: "date-time" }
-const allFieldsJsonSchema = toJSONSchemaWithDates(allFieldsSchema);
+const allFieldsJsonSchema = zodToFormSchema(allFieldsSchema);
 
 console.log(allFieldsJsonSchema)
 
@@ -343,7 +344,7 @@ export default function Home() {
           <div>
             <h2 className="text-lg font-semibold mb-4 text-center">JSON Schema (Empty)</h2>
             <AutoForm
-              formSchema={fromJSONSchemaWithDates(allFieldsJsonSchema)}
+              formSchema={formSchemaToZod(allFieldsJsonSchema)}
               onSubmit={(values) => handleSubmit(values as FormData)}
               fieldConfig={buildFieldConfigFromJsonSchema(allFieldsJsonSchema, customFieldComponents)}
             >
@@ -355,7 +356,7 @@ export default function Home() {
           <div>
             <h2 className="text-lg font-semibold mb-4 text-center">JSON Schema (Filled)</h2>
             <AutoForm
-              formSchema={fromJSONSchemaWithDates(allFieldsJsonSchema)}
+              formSchema={formSchemaToZod(allFieldsJsonSchema)}
               onSubmit={(values) => handleSubmit(values as FormData)}
               fieldConfig={buildFieldConfigFromJsonSchema(allFieldsJsonSchema, customFieldComponents)}
               values={filledFormValues}

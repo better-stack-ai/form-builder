@@ -287,6 +287,8 @@ function CustomStepper({ steps, currentStepIndex, onStepClick }: StepperComponen
 
 A visual drag-and-drop form builder that outputs JSON Schema. Users can design forms visually, and developers can render them using auto-form.
 
+![Form Builder](doc-assets/builder-filled.png)
+
 ### Basic Usage
 
 ```tsx
@@ -418,10 +420,12 @@ Use auto-form to render forms created with the builder:
 
 ```tsx
 import AutoForm from "@/components/ui/auto-form";
-import { fromJSONSchemaWithDates, buildFieldConfigFromJsonSchema } from "@/components/ui/auto-form/utils";
+import { buildFieldConfigFromJsonSchema } from "@/components/ui/auto-form/utils";
+import { formSchemaToZod } from "@/lib/schema-converter";
 
 function RenderForm({ schema }: { schema: JSONSchema }) {
-  const zodSchema = fromJSONSchemaWithDates(schema);
+  // formSchemaToZod handles: steps metadata, stepGroup mapping, date constraints
+  const zodSchema = formSchemaToZod(schema);
   const fieldConfig = buildFieldConfigFromJsonSchema(schema);
 
   return (
