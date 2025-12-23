@@ -63,10 +63,12 @@ export function EditFieldDialog({
   // Track form values locally with overrides
   const [fieldNameOverride, setFieldNameOverride] = useState<string | null>(null);
   const [localPropsOverride, setLocalPropsOverride] = useState<Record<string, unknown> | null>(null);
+  const [stepGroupOverride, setStepGroupOverride] = useState<number | null>(null);
 
   // Use override if set, otherwise use initial values
   const fieldName = fieldNameOverride ?? initialValues.fieldName;
   const localProps = localPropsOverride ?? initialValues.props;
+  const localStepGroup = stepGroupOverride ?? field?.stepGroup ?? 0;
 
   // Reset overrides when initial values change
   const [prevInitial, setPrevInitial] = useState(initialValues);
@@ -74,6 +76,7 @@ export function EditFieldDialog({
     setPrevInitial(initialValues);
     setFieldNameOverride(null);
     setLocalPropsOverride(null);
+    setStepGroupOverride(null);
   }
 
   // Form key for AutoForm reset
@@ -103,8 +106,14 @@ export function EditFieldDialog({
     // Determine if we need to update the ID
     const newId = fieldName !== field.id ? fieldName : undefined;
     onUpdate(field.id, props, newId);
+    
+    // Update step group if changed (only apply on save)
+    if (onUpdateStepGroup && stepGroupOverride !== null && stepGroupOverride !== field.stepGroup) {
+      onUpdateStepGroup(newId ?? field.id, stepGroupOverride);
+    }
+    
     onOpenChange(false);
-  }, [field, localProps, fieldName, onUpdate, onOpenChange]);
+  }, [field, localProps, fieldName, onUpdate, onOpenChange, onUpdateStepGroup, stepGroupOverride]);
 
   if (!field || !component) {
     return null;
@@ -149,8 +158,8 @@ export function EditFieldDialog({
             <div className="space-y-2">
               <Label htmlFor="field-step">Step</Label>
               <Select
-                value={String(field.stepGroup ?? 0)}
-                onValueChange={(value) => onUpdateStepGroup(field.id, parseInt(value, 10))}
+                value={String(localStepGroup)}
+                onValueChange={(value) => setStepGroupOverride(parseInt(value, 10))}
               >
                 <SelectTrigger id="field-step">
                   <SelectValue placeholder="Select step" />
