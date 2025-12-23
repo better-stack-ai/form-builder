@@ -364,7 +364,7 @@ test.describe("Form Builder - Multi-Step Forms", () => {
     await expect(page.getByText("Test Value")).toBeVisible();
   });
 
-  test("should allow clicking step indicators to navigate", async ({ page }) => {
+  test("should allow clicking step indicators to navigate only to completed steps", async ({ page }) => {
     // Create 3-step form
     await page.getByRole("button", { name: "Add Step" }).click();
     await page.getByRole("button", { name: "Add Step" }).click();
@@ -391,17 +391,30 @@ test.describe("Form Builder - Multi-Step Forms", () => {
     // Should be on Step 1
     await expect(formCard.getByText("Step 1 of 3")).toBeVisible();
     
-    // Click step 3 indicator (free navigation) - using exact match
+    // Try to click step 3 indicator - should NOT navigate (step not completed)
     await formCard.getByRole("button", { name: "3", exact: true }).click();
     
-    // Should now be on Step 3
-    await expect(formCard.getByText("Step 3 of 3")).toBeVisible();
+    // Should still be on Step 1 (cannot skip ahead)
+    await expect(formCard.getByText("Step 1 of 3")).toBeVisible();
     
-    // Click step 1 indicator to go back - using exact match
+    // Fill step 1 and proceed to step 2
+    await formCard.getByLabel("Text").fill("Test Value");
+    await formCard.getByRole("button", { name: "Next" }).click();
+    
+    // Should be on Step 2
+    await expect(formCard.getByText("Step 2 of 3")).toBeVisible();
+    
+    // Now step 1 is completed, clicking step 1 indicator should work
     await formCard.getByRole("button", { name: "1", exact: true }).click();
     
     // Should be back on Step 1
     await expect(formCard.getByText("Step 1 of 3")).toBeVisible();
+    
+    // Click step 2 indicator to go forward again (step 1 is completed, step 2 was visited)
+    await formCard.getByRole("button", { name: "2", exact: true }).click();
+    
+    // Should be on Step 2
+    await expect(formCard.getByText("Step 2 of 3")).toBeVisible();
   });
 });
 
