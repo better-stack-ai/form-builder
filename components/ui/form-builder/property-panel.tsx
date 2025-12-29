@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import AutoForm from "@/components/ui/auto-form";
 import { cn } from "@/lib/utils";
-import { buildFieldConfigFromJsonSchema } from "@/components/ui/auto-form/utils";
+import { buildFieldConfigFromJsonSchema } from "@/components/ui/auto-form/helpers";
 import type { FormBuilderField, FormBuilderComponentDefinition, FormBuilderFieldProps } from "./types";
 
 interface PropertyPanelProps {

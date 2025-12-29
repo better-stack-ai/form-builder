@@ -2,7 +2,7 @@
 
 import AutoForm, { AutoFormSubmit } from "@/components/ui/auto-form";
 import { FieldInputProps } from "@/components/ui/auto-form/types";
-import { buildFieldConfigFromJsonSchema } from "@/components/ui/auto-form/utils";
+import { buildFieldConfigFromJsonSchema } from "@/components/ui/auto-form/helpers";
 import { zodToFormSchema, formSchemaToZod } from "@/lib/schema-converter";
 import { AutoFormColorPicker } from "@/components/ui/color-picker";
 import { AutoFormFileUploader } from "@/components/ui/file-uploader";

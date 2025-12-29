@@ -84,6 +84,10 @@
           "type": "registry:component"
         },
         {
+          "path": "components/ui/auto-form/helpers.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "components/ui/auto-form/index.tsx",
           "type": "registry:component"
         },
@@ -93,10 +97,6 @@
         },
         {
           "path": "components/ui/auto-form/types.ts",
-          "type": "registry:component"
-        },
-        {
-          "path": "components/ui/auto-form/utils.tsx",
           "type": "registry:component"
         }
       ]

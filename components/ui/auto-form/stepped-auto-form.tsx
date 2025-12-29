@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { FieldConfig } from "./types";
-import type { ZodObjectOrWrapped } from "./utils";
+import type { ZodObjectOrWrapped } from "./helpers";
 
 export default SteppedAutoForm;
 export { SteppedAutoForm };

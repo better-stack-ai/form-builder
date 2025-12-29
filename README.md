@@ -420,7 +420,7 @@ Use auto-form to render forms created with the builder:
 
 ```tsx
 import AutoForm from "@/components/ui/auto-form";
-import { buildFieldConfigFromJsonSchema } from "@/components/ui/auto-form/utils";
+import { buildFieldConfigFromJsonSchema } from "@/components/ui/auto-form/helpers";
 import { formSchemaToZod } from "@/lib/schema-converter";
 
 function RenderForm({ schema }: { schema: JSONSchema }) {

@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { buildFieldConfigFromJsonSchema } from "../components/ui/auto-form/utils";
+import { buildFieldConfigFromJsonSchema } from "../components/ui/auto-form/helpers";
 
 describe("buildFieldConfigFromJsonSchema", () => {
   describe("basic field extraction", () => {
