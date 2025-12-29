@@ -7,7 +7,7 @@
  * - inputProps flow from form-builder → JSON Schema → auto-form
  */
 
-import type { INPUT_COMPONENTS } from "./auto-form/config";
+import type { INPUT_COMPONENTS } from "./config";
 
 // ============================================================================
 // INPUT PROPS BY BACKING TYPE
@@ -271,3 +271,4 @@ export const JSON_SCHEMA_TO_FIELD_CONFIG_MAP = {
   inputType: "inputProps.type",
   default: "inputProps.defaultValue",
 } as const;
+

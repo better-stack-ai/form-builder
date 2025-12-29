@@ -53,12 +53,9 @@ const REGISTRY_OUTPUT_DIR = path.join(ROOT_DIR, "registry");
 const REGISTRY_SRC_DIR = path.join(ROOT_DIR, ".registry-src");
 
 // Path mappings: source path -> registry path
-// This removes the /ui/ segment so files are installed directly under components/
+// Use source paths as-is to match shadcn's convention (components/ui/...)
 const PATH_MAPPINGS: Array<{ from: string; to: string }> = [
-  { from: "components/ui/auto-form", to: "components/auto-form" },
-  { from: "components/ui/form-builder", to: "components/form-builder" },
-  { from: "components/ui/form.tsx", to: "components/form.tsx" },
-  { from: "components/ui/shared-form-types.ts", to: "components/shared-form-types.ts" },
+  // No mappings needed - source paths are used directly
 ];
 
 // ============================================================================
@@ -158,15 +155,9 @@ function buildAutoFormItem(): RegistryItem {
     (f) => !f.endsWith("stepped-auto-form.tsx")
   );
 
-  // Add shared component files
-  // Note: We don't include lib/utils.ts because it's a standard shadcn utility
-  // that users already have from installing any shadcn component.
-  const sharedFiles = [
-    "components/ui/form.tsx",
-    "components/ui/shared-form-types.ts",
-  ];
-
-  const allSourceFiles = [...filteredFiles, ...sharedFiles];
+  // Note: We don't include form.tsx because it's installed via registryDependencies.
+  // shared-form-types.ts is now inside the auto-form folder.
+  const allSourceFiles = [...filteredFiles];
   
   // Copy files to registry source and get transformed paths
   const registryPaths = allSourceFiles.map(copyToRegistrySrc);
