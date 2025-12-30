@@ -18,6 +18,7 @@
     "radio-group",
     "switch",
     "textarea",
+    "accordion",
     "calendar",
     "popover"
   ],

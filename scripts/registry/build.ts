@@ -178,6 +178,7 @@ function buildAutoFormItem(): RegistryItem {
       "radio-group",
       "switch",
       "textarea",
+      "accordion",
       "calendar",
       "popover",
     ],
