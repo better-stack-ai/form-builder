@@ -9,7 +9,7 @@ import type {
   DateInputProps,
   EnumInputProps,
   InputPropsByBackingType,
-} from "../auto-form/shared-form-types";
+} from "@/components/ui/auto-form/shared-form-types";
 
 // Re-export discriminated input prop types from shared-form-types
 export type {

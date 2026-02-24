@@ -19,6 +19,7 @@ import * as path from "path";
 
 interface RegistryFile {
   path: string;
+  target: string;
   type:
     | "registry:component"
     | "registry:lib"
@@ -129,11 +130,15 @@ function getFileType(filePath: string): RegistryFile["type"] {
 }
 
 /**
- * Create a RegistryFile from a registry path
+ * Create a RegistryFile from a registry path.
+ * The explicit `target` bypasses the shadcn CLI's resolveNestedFilePath function,
+ * which has a known Windows bug where it splits paths on "/" instead of the OS
+ * path separator, causing nested files to be flattened into the top-level directory.
  */
 function createRegistryFile(registryPath: string): RegistryFile {
   return {
     path: registryPath,
+    target: registryPath,
     type: getFileType(registryPath),
   };
 }
